@@ -3,7 +3,8 @@
 #[starknet::contract]
 mod UniswapV3Pool {
     use starknet::storage::StoragePointerWriteAccess;
-use contracts::contract::{position::Position, tick::Tick};
+    use contracts::libraries::{position::Position, tick::Tick};
+    use contracts::contract::interface::UniswapV3PoolTrait;
     use starknet::ContractAddress;
     use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess};
 
@@ -13,6 +14,10 @@ use contracts::contract::{position::Position, tick::Tick};
     struct Storage {
         token0: ContractAddress,
         token1: ContractAddress,
+    }
+
+    #[derive(Copy, Drop, Serde, starknet::Store)]
+    struct Slot0 {
         sqrt_pricex96: u256,
         tick: i32,
     }
@@ -22,12 +27,22 @@ use contracts::contract::{position::Position, tick::Tick};
     }
     #[constructor]
     fn constructor(ref self: ContractState, token0: ContractAddress, token1: ContractAddress, sqrt_pricex96: u256, tick: i32) {
-        assert(tick >= MIN_TICK , 'Tick must be higher');
-        assert(tick <= MAX_TICK , 'Tick must be lower');
+        assert(tick > MIN_TICK , 'Tick must be higher');
+        assert(tick < MAX_TICK , 'Tick must be lower');
 
         self.token0.write(token0);
         self.token1.write(token1);
-        self.sqrt_pricex96.write(sqrt_pricex96);
-        self.tick.write(tick);
+    }
+    #[abi(embed_v0)]
+    impl IUniswapV3PoolImpl of UniswapV3PoolTrait<ContractState> {
+        fn mint(ref self: ContractState, lower_tick: i32, upper_tick: i32, amount: u128) -> (u256,u256) {
+            assert!(lower_tick > MIN_TICK, "lower tick too low");
+            assert!(upper_tick < MAX_TICK, "upper tick too high");
+            assert!(lower_tick <= upper_tick, "lower tick must be lower or equal to upper tick");
+            assert!(amount != 0, "liq amount must be > 0");
+
+
+            (1,1)
+        }
     }
 }
