@@ -1,26 +1,26 @@
 // should have: reserve 0, reserve 1, liquidity, position holders map, 
-
+#[derive(Copy, Drop, Serde, starknet::Store)]
+struct Slot0 {
+    sqrt_pricex96: u256,
+    tick: i32,
+}
 #[starknet::contract]
 mod UniswapV3Pool {
     use starknet::storage::StoragePointerWriteAccess;
-    use contracts::libraries::{position::Position, tick::Tick};
     use contracts::contract::interface::UniswapV3PoolTrait;
     use starknet::ContractAddress;
     use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess};
-
+    use super::*;
     const MIN_TICK: i32 = -887272;
     const MAX_TICK: i32 = -MIN_TICK;
     #[storage]
     struct Storage {
         token0: ContractAddress,
         token1: ContractAddress,
+        slot0: Slot0,
+        liquidity: u256,
     }
 
-    #[derive(Copy, Drop, Serde, starknet::Store)]
-    struct Slot0 {
-        sqrt_pricex96: u256,
-        tick: i32,
-    }
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -30,8 +30,10 @@ mod UniswapV3Pool {
         assert(tick > MIN_TICK , 'Tick must be higher');
         assert(tick < MAX_TICK , 'Tick must be lower');
 
+        let slot0 = Slot0 { sqrt_pricex96, tick };
         self.token0.write(token0);
         self.token1.write(token1);
+        self.slot0.write(slot0);
     }
     #[abi(embed_v0)]
     impl IUniswapV3PoolImpl of UniswapV3PoolTrait<ContractState> {
