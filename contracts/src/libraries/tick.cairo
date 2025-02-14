@@ -1,8 +1,7 @@
-
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct Info {
     inited: bool,
-    liq: u128
+    liq: u128,
 }
 
 #[starknet::contract]
@@ -13,12 +12,11 @@ pub mod Tick {
 
     #[storage]
     struct Storage {
-        ticks: Map<felt252, Info>
+        ticks: Map<felt252, Info>,
     }
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-    }
+    enum Event {}
 
     pub impl ITickImpl of ITickTrait<ContractState> {
         fn update(ref self: ContractState, tick: i32, liq_delta: u128) {

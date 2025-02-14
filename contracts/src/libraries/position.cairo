@@ -1,6 +1,6 @@
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct Info {
-    pub liq: u128
+    pub liq: u128,
 }
 
 
@@ -22,15 +22,14 @@ pub mod Position {
 
     #[storage]
     struct Storage {
-        positions: Map<felt252, Info>
+        positions: Map<felt252, Info>,
     }
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-    }
+    enum Event {}
 
     #[abi(embed_v0)]
-    pub impl IPositionImpl of IPositionTrait<ContractState>{
+    pub impl IPositionImpl of IPositionTrait<ContractState> {
         fn update(ref self: ContractState, key: Key, liq_delta: u128) {
             let hash = PoseidonTrait::new().update_with(key).finalize();
             let mut info = self.positions.read(hash);
