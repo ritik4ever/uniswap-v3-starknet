@@ -6,7 +6,7 @@ pub struct Info {
 }
 
 #[starknet::contract]
-mod Tick {
+pub mod Tick {
     use contracts::contract::interface::ITickTrait;
     use super::*;
     use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
@@ -20,7 +20,7 @@ mod Tick {
     enum Event {
     }
 
-    impl ITickImpl of ITickTrait<ContractState> {
+    pub impl ITickImpl of ITickTrait<ContractState> {
         fn update(ref self: ContractState, tick: i32, liq_delta: u128) {
             let mut info = self.ticks.read(tick.into());
 

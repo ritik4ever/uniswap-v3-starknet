@@ -8,7 +8,9 @@ struct Slot0 {
 mod UniswapV3Pool {
     use starknet::storage::StoragePointerWriteAccess;
     use contracts::contract::interface::UniswapV3PoolTrait;
-    use starknet::ContractAddress;
+    use contracts::libraries::tick::{Tick, Tick::ITickImpl};
+    use contracts::libraries::position::{Key, Position, Position::IPositionImpl};
+    use starknet::{ContractAddress, get_caller_address};
     use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess};
     use super::*;
     const MIN_TICK: i32 = -887272;
@@ -37,14 +39,22 @@ mod UniswapV3Pool {
     }
     #[abi(embed_v0)]
     impl IUniswapV3PoolImpl of UniswapV3PoolTrait<ContractState> {
-        fn mint(ref self: ContractState, lower_tick: i32, upper_tick: i32, amount: u128) -> (u256,u256) {
+        fn mint(ref self: ContractState, lower_tick: i32, upper_tick: i32, amount: u128) {
             assert!(lower_tick > MIN_TICK, "lower tick too low");
             assert!(upper_tick < MAX_TICK, "upper tick too high");
             assert!(lower_tick <= upper_tick, "lower tick must be lower or equal to upper tick");
             assert!(amount != 0, "liq amount must be > 0");
+            
+            let key = Key { owner: get_caller_address(), lower_tick, upper_tick };
+            let mut tick_state = Tick::unsafe_new_contract_state();
+            let mut position_state = Position::unsafe_new_contract_state();
+            let pos = IPositionImpl::get(@position_state, key);
+            
+            ITickImpl::update(ref tick_state, lower_tick, amount);
+            ITickImpl::update(ref tick_state, upper_tick, amount);
+            IPositionImpl::update(ref position_state, key, amount);
 
-
-            (1,1)
+            self.liquidity.write(pos.liq.into());
         }
     }
 }

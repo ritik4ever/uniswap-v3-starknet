@@ -1,21 +1,21 @@
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct Info {
-    liq: u128
+    pub liq: u128
 }
 
 
 #[derive(Copy, Drop, Serde, starknet::Store, Hash)]
 pub struct Key {
-    owner: starknet::ContractAddress,
-    lower_tick: i32,
-    upper_tick: i32,
+    pub owner: starknet::ContractAddress,
+    pub lower_tick: i32,
+    pub upper_tick: i32,
 }
 
 #[starknet::contract]
-mod Position {
+pub mod Position {
     use core::hash::HashStateTrait;
-use core::hash::HashStateExTrait;
-use super::*;
+    use core::hash::HashStateExTrait;
+    use super::*;
     use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
     use contracts::contract::interface::IPositionTrait;
     use core::poseidon::PoseidonTrait;
@@ -30,7 +30,7 @@ use super::*;
     }
 
     #[abi(embed_v0)]
-    impl IPositionImpl of IPositionTrait<ContractState>{
+    pub impl IPositionImpl of IPositionTrait<ContractState>{
         fn update(ref self: ContractState, key: Key, liq_delta: u128) {
             let hash = PoseidonTrait::new().update_with(key).finalize();
             let mut info = self.positions.read(hash);
