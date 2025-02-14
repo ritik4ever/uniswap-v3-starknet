@@ -6,6 +6,7 @@ struct Slot0 {
 }
 #[starknet::contract]
 mod UniswapV3Pool {
+
     use starknet::storage::StoragePointerWriteAccess;
     use contracts::contract::interface::UniswapV3PoolTrait;
     use contracts::libraries::tick::{Tick, Tick::ITickImpl};
@@ -48,11 +49,10 @@ mod UniswapV3Pool {
             let key = Key { owner: get_caller_address(), lower_tick, upper_tick };
             let mut tick_state = Tick::unsafe_new_contract_state();
             let mut position_state = Position::unsafe_new_contract_state();
-            let pos = IPositionImpl::get(@position_state, key);
-            
-            ITickImpl::update(ref tick_state, lower_tick, amount);
-            ITickImpl::update(ref tick_state, upper_tick, amount);
-            IPositionImpl::update(ref position_state, key, amount);
+            let pos = position_state.get(key);
+            tick_state.update(lower_tick, amount);
+            tick_state.update(upper_tick, amount);
+            position_state.update(key, amount);
 
             self.liquidity.write(pos.liq.into());
         }
