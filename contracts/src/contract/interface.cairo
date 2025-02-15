@@ -3,6 +3,7 @@ use contracts::libraries::position::{Key, Info};
 #[starknet::interface]
 pub trait UniswapV3PoolTrait<TContractState> {
     fn mint(ref self: TContractState, lower_tick: i32, upper_tick: i32, amount: u128);
+    fn get_liquidity(self: @TContractState) -> u256;
 }
 
 #[starknet::interface]

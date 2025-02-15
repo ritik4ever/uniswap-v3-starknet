@@ -5,7 +5,8 @@ struct Slot0 {
     tick: i32,
 }
 #[starknet::contract]
-mod UniswapV3Pool {
+pub mod UniswapV3Pool {
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::storage::StoragePointerWriteAccess;
     use contracts::contract::interface::UniswapV3PoolTrait;
     use contracts::libraries::tick::{Tick, Tick::ITickImpl};
@@ -59,6 +60,10 @@ mod UniswapV3Pool {
             position_state.update(key, amount);
 
             self.liquidity.write(pos.liq.into());
+        }
+
+        fn get_liquidity(self: @ContractState) -> u256 {
+            self.liquidity.read()
         }
     }
 }
