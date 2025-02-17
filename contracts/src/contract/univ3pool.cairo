@@ -59,7 +59,8 @@ pub mod UniswapV3Pool {
             tick_state.update(upper_tick, amount);
             position_state.update(key, amount);
 
-            self.liquidity.write(pos.liq.into());
+            let new_liq = position_state.get(key).liq;
+            self.liquidity.write(new_liq.into());
         }
 
         fn get_liquidity(self: @ContractState) -> u256 {
