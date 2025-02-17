@@ -1,8 +1,40 @@
+mod utils;
+use utils::get_token0_n_1;
 use starknet::{ContractAddress, contract_address_const};
 use snforge_std::{declare, DeclareResultTrait, ContractClassTrait};
 
 use contracts::contract::interface::UniswapV3PoolTraitDispatcher;
 use contracts::contract::interface::UniswapV3PoolTraitDispatcherTrait;
+
+struct TestParams {
+    strk_balance: u128, // balance in strk (P = x/y)
+    usdc_balance: u128, //balance in usdc 
+    cur_tick: i32,
+    lower_tick: i32,
+    upper_tick: i32,
+    liq: u256,
+    cur_sqrtp: u256,
+    mint_liquidity: bool,
+}
+
+trait TestParamsT<T> {
+    fn test1params() -> TestParams;
+}
+
+impl TestParamsImpl of TestParamsT<TestParams> {
+    fn test1params() -> TestParams {
+        TestParams {
+            strk_balance: 1000000,
+            usdc_balance: 225398,
+            cur_tick: -15376,
+            lower_tick: -15900,
+            upper_tick: -14880,
+            liq: 18783000,
+            cur_sqrtp: 36736587662821057944650860901,
+            mint_liquidity: true,
+        }
+    }
+}
 
 fn deploy_contract(name: ByteArray, calldata: Array<felt252>) -> ContractAddress {
     let contract = declare(name).unwrap().contract_class();
@@ -12,23 +44,18 @@ fn deploy_contract(name: ByteArray, calldata: Array<felt252>) -> ContractAddress
 
 #[test]
 fn test_mint_liquidity() {
-    let token0 = contract_address_const::<
-        0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
-    >(); // STRK token address.
-    let token1 = contract_address_const::<
-        0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
-    >(); // USDC token address.
+    let (token0, token1) = get_token0_n_1();
 
     let sqrt_pricex96_low = 1000;
     let sqrt_pricex96_high = 0;
     let init_tick = 10000; // within the allowed range (-887272, 887272)
 
     let calldata: Array<felt252> = array![
-         token0.into(),
-         token1.into(),
-         sqrt_pricex96_low.into(),
-         sqrt_pricex96_high.into(),
-         init_tick.into()
+        token0.into(),
+        token1.into(),
+        sqrt_pricex96_low.into(),
+        sqrt_pricex96_high.into(),
+        init_tick.into(),
     ];
 
     let pool_contract_address = deploy_contract("UniswapV3Pool", calldata);

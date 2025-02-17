@@ -1,4 +1,4 @@
-// should have: reserve 0, reserve 1, liquidity, position holders map,
+// should have: reserve 0, reserve 1, liquidity, position holders map?,
 #[derive(Copy, Drop, Serde, starknet::Store)]
 struct Slot0 {
     sqrt_pricex96: u256,
@@ -7,7 +7,7 @@ struct Slot0 {
 #[starknet::contract]
 pub mod UniswapV3Pool {
     use starknet::event::EventEmitter;
-use starknet::storage::StoragePointerReadAccess;
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::storage::StoragePointerWriteAccess;
     use contracts::contract::interface::UniswapV3PoolTrait;
     use contracts::libraries::tick::{Tick, Tick::ITickImpl};
@@ -24,18 +24,18 @@ use starknet::storage::StoragePointerReadAccess;
         slot0: Slot0,
         liquidity: u256,
     }
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        Mint: Mint,
+    }
+
     #[derive(Drop, starknet::Event)]
     struct Mint {
         sender: ContractAddress,
         upper_tick: i32,
         lower_tick: i32,
         amount: u128,
-    }
-
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    enum Event {
-        Mint: Mint,
     }
 
     #[constructor]
@@ -71,12 +71,7 @@ use starknet::storage::StoragePointerReadAccess;
 
             let new_liq = position_state.get(key).liq;
             self.liquidity.write(new_liq.into());
-            self.emit( Mint {
-                sender: get_caller_address(),
-                upper_tick,
-                lower_tick,
-                amount
-            });
+            self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
         }
 
         fn get_liquidity(self: @ContractState) -> u256 {
