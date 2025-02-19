@@ -31,5 +31,9 @@ pub mod Tick {
             info.liq = liq_after;
             self.ticks.write(tick.into(), info);
         }
+
+        fn is_init(self: @ContractState, tick: i32) -> bool {
+            self.ticks.read(tick.into()).inited
+        }
     }
 }

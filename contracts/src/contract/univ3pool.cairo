@@ -6,6 +6,7 @@ struct Slot0 {
 }
 #[starknet::contract]
 pub mod UniswapV3Pool {
+    use contracts::contract::interface::ITickTrait;
     use starknet::event::EventEmitter;
     use starknet::storage::StoragePointerReadAccess;
     use starknet::storage::StoragePointerWriteAccess;
@@ -15,8 +16,10 @@ pub mod UniswapV3Pool {
     use starknet::{ContractAddress, get_caller_address};
     use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess};
     use super::*;
+    
     const MIN_TICK: i32 = -887272;
     const MAX_TICK: i32 = -MIN_TICK;
+
     #[storage]
     struct Storage {
         token0: ContractAddress,
@@ -76,6 +79,10 @@ pub mod UniswapV3Pool {
 
         fn get_liquidity(self: @ContractState) -> u256 {
             self.liquidity.read()
+        }
+
+        fn is_tick_init(self: @ContractState, tick: i32) -> bool {
+            Tick::unsafe_new_contract_state().is_init(tick)
         }
     }
 }
