@@ -5,6 +5,7 @@ pub trait UniswapV3PoolTrait<TContractState> {
     fn mint(ref self: TContractState, lower_tick: i32, upper_tick: i32, amount: u128);
     fn get_liquidity(self: @TContractState) -> u256;
     fn is_tick_init(self: @TContractState, tick: i32) -> bool;
+    fn swap(ref self: TContractState) -> (u128, u128);
 }
 
 #[starknet::interface]

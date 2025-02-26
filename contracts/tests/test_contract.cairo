@@ -32,7 +32,7 @@ impl TestParamsImpl of TestParamsT<TestParams> {
             cur_tick: -15372,
             lower_tick: -15900,
             upper_tick: -14880,
-            liq: 5670207847624064000,
+            liq: 5670207847624059387904,
             cur_sqrtp: 36736587662821057944650860901,
             mint_liquidity: true,
         }

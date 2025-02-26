@@ -14,9 +14,8 @@ pub mod UniswapV3Pool {
     use contracts::libraries::tick::{Tick, Tick::ITickImpl};
     use contracts::libraries::position::{Key, Position, Position::IPositionImpl};
     use starknet::{ContractAddress, get_caller_address};
-    use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess};
     use super::*;
-    
+
     const MIN_TICK: i32 = -887272;
     const MAX_TICK: i32 = -MIN_TICK;
 
@@ -75,6 +74,11 @@ pub mod UniswapV3Pool {
             let new_liq = position_state.get(key).liq;
             self.liquidity.write(new_liq.into());
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
+        }
+
+        fn swap(ref self: ContractState) -> (u128, u128){
+            let slot0_before = self.slot0.read();
+            (1,1)
         }
 
         fn get_liquidity(self: @ContractState) -> u256 {
