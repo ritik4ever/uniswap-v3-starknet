@@ -55,7 +55,7 @@ fn test_mint_liquidity_using_params() {
         token1.into(),
         params.cur_sqrtp.try_into().unwrap(), //u256 struct high
         0.into(), // u256 struct low
-        params.cur_tick.into()
+        params.cur_tick.into(),
     ];
 
     let pool_contract_address = deploy_contract("UniswapV3Pool", calldata);

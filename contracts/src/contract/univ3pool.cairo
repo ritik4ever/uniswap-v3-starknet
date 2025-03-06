@@ -76,9 +76,9 @@ pub mod UniswapV3Pool {
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
         }
 
-        fn swap(ref self: ContractState) -> (u128, u128){
+        fn swap(ref self: ContractState) -> (u128, u128) {
             let slot0_before = self.slot0.read();
-            (1,1)
+            (1, 1)
         }
 
         fn get_liquidity(self: @ContractState) -> u256 {
