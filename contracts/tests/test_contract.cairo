@@ -1,4 +1,3 @@
-use contracts::contract::interface::ITickTrait;
 mod utils;
 use utils::get_token0_n_1;
 use starknet::ContractAddress;
@@ -6,7 +5,6 @@ use snforge_std::{declare, DeclareResultTrait, ContractClassTrait};
 
 use contracts::contract::interface::UniswapV3PoolTraitDispatcher;
 use contracts::contract::interface::UniswapV3PoolTraitDispatcherTrait;
-use contracts::libraries::tick::Tick;
 
 #[derive(Drop)]
 struct TestParams {
