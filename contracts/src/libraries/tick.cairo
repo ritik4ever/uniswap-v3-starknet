@@ -7,8 +7,8 @@ pub struct Info {
 #[starknet::contract]
 pub mod Tick {
     use contracts::contract::interface::ITickTrait;
-    use super::*;
     use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
+    use super::*;
 
     #[storage]
     struct Storage {

@@ -13,12 +13,11 @@ pub struct Key {
 
 #[starknet::contract]
 pub mod Position {
-    use core::hash::HashStateTrait;
-    use core::hash::HashStateExTrait;
-    use super::*;
-    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
     use contracts::contract::interface::IPositionTrait;
+    use core::hash::{HashStateExTrait, HashStateTrait};
     use core::poseidon::PoseidonTrait;
+    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
+    use super::*;
 
     #[storage]
     struct Storage {

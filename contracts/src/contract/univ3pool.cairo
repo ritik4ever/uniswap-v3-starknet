@@ -6,13 +6,13 @@ struct Slot0 {
 }
 #[starknet::contract]
 pub mod UniswapV3Pool {
-    use contracts::contract::interface::ITickTrait;
+    use contracts::contract::interface::{ITickTrait, UniswapV3PoolTrait};
+    use contracts::libraries::position::Position::IPositionImpl;
+    use contracts::libraries::position::{Key, Position};
+    use contracts::libraries::tick::Tick;
+    use contracts::libraries::tick::Tick::ITickImpl;
     use starknet::event::EventEmitter;
-    use starknet::storage::StoragePointerReadAccess;
-    use starknet::storage::StoragePointerWriteAccess;
-    use contracts::contract::interface::UniswapV3PoolTrait;
-    use contracts::libraries::tick::{Tick, Tick::ITickImpl};
-    use contracts::libraries::position::{Key, Position, Position::IPositionImpl};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_caller_address};
     use super::*;
 
@@ -83,7 +83,8 @@ pub mod UniswapV3Pool {
             let next_tick = 85184;
             let next_price = 5604469350942327889444743441197;
 
-            let amount0 = -8396714242162444; // ETH, needs to be divided by 10^18 (decimals) to be -0.008396714242162444
+            let amount0 =
+                -8396714242162444; // ETH, needs to be divided by 10^18 (decimals) to be -0.008396714242162444
             let amount1 = 42; // 42 usdc scaled
 
             slot0.tick = next_tick;

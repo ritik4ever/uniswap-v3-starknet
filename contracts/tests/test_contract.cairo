@@ -1,10 +1,10 @@
 mod utils;
-use utils::get_token0_n_1;
+use contracts::contract::interface::{
+    UniswapV3PoolTraitDispatcher, UniswapV3PoolTraitDispatcherTrait,
+};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use starknet::ContractAddress;
-use snforge_std::{declare, DeclareResultTrait, ContractClassTrait};
-
-use contracts::contract::interface::UniswapV3PoolTraitDispatcher;
-use contracts::contract::interface::UniswapV3PoolTraitDispatcherTrait;
+use utils::get_token0_n_1;
 
 #[derive(Drop)]
 struct TestParams {
