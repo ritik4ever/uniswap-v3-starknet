@@ -77,7 +77,18 @@ pub mod UniswapV3Pool {
         }
 
         fn swap(ref self: ContractState) -> (u128, u128) {
-            let slot0_before = self.slot0.read();
+            let caller = get_caller_address();
+            let mut slot0 = self.slot0.read();
+
+            let next_tick = 85184;
+            let next_price = 5604469350942327889444743441197;
+
+            let amount0 = -8396714242162444; // ETH, needs to be divided by 10^18 (decimals) to be -0.008396714242162444
+            let amount1 = 42; // 42 usdc scaled
+
+            slot0.tick = next_tick;
+            slot0.sqrt_pricex96 = next_price;
+
             (1, 1)
         }
 
