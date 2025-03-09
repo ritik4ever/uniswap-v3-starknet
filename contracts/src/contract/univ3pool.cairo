@@ -6,15 +6,19 @@ struct Slot0 {
 }
 #[starknet::contract]
 pub mod UniswapV3Pool {
-    use contracts::contract::interface::{ITickTrait, UniswapV3PoolTrait, IERC20Trait};
+    use contracts::contract::interface::{
+        IERC20Trait, IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait,
+        IUniswapV3SwapCallbackDispatcher, IUniswapV3SwapCallbackDispatcherTrait, UniswapV3PoolTrait,
+    };
     use contracts::libraries::erc20::ERC20;
     use contracts::libraries::position::Position::IPositionImpl;
     use contracts::libraries::position::{Key, Position};
     use contracts::libraries::tick::Tick;
     use contracts::libraries::tick::Tick::ITickImpl;
+    use contracts::libraries::utils::math::scale_amount;
     use starknet::event::EventEmitter;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use super::*;
 
     const MIN_TICK: i32 = -887272;
@@ -77,26 +81,53 @@ pub mod UniswapV3Pool {
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
         }
 
-        fn swap(ref self: ContractState) -> (u128, u128) {
+        fn swap(ref self: ContractState) -> (i128, i128) {
             let caller = get_caller_address();
             let mut slot0 = self.slot0.read();
 
+            // hardcoded values for now
             let next_tick = 85184;
             let next_price = 5604469350942327889444743441197;
 
-            let amount0 =
-                -8396714242162444; // ETH, needs to be divided by 10^18 (decimals) to be -0.008396714242162444
-            let amount1 = 42; // 42 usdc scaled
+            // ETH out (negative), USDC in (positive)
+            let amount0 = -8396714242162444_i128;
+            let amount1 = 42_i128;
 
             slot0.tick = next_tick;
             slot0.sqrt_pricex96 = next_price;
+            self.slot0.write(slot0);
 
-            let mut erc20 = ERC20::unsafe_new_contract_state();
+            // transfer output token (ETH)
+            let token0_addr = self.token0.read();
+            let mut erc20_0 = IERC20TraitDispatcher { contract_address: token0_addr };
+            let decimals0 = erc20_0.get_decimals();
+            let scaled_amount0 = scale_amount(-amount0, decimals0);
+            erc20_0.transfer(caller, scaled_amount0.try_into().unwrap());
 
-            erc20.transfer(caller, amount0);
+            let token1_addr = self.token1.read();
+            let mut erc20_1 = IERC20TraitDispatcher { contract_address: token1_addr };
+            let decimals1 = erc20_1.get_decimals();
+            let balance_before: u256 = erc20_1
+                .balance_of(get_contract_address())
+                .try_into()
+                .unwrap();
 
-            (1, 1)
+            // execute callback to receive tokens
+            let callback_dispatcher = IUniswapV3SwapCallbackDispatcher { contract_address: caller };
+            callback_dispatcher.swap_callback(amount0, amount1, array![]);
+
+            let balance_after: u256 = erc20_1
+                .balance_of(get_contract_address())
+                .try_into()
+                .unwrap();
+            let required_amount1 = scale_amount(amount1, decimals1);
+            assert(
+                balance_after - balance_before >= required_amount1, 'Insufficient USDC received',
+            );
+
+            (amount0, amount1)
         }
+
 
         fn get_liquidity(self: @ContractState) -> u256 {
             self.liquidity.read()
