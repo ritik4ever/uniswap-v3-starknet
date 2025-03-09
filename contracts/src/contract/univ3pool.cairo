@@ -6,7 +6,8 @@ struct Slot0 {
 }
 #[starknet::contract]
 pub mod UniswapV3Pool {
-    use contracts::contract::interface::{ITickTrait, UniswapV3PoolTrait};
+    use contracts::contract::interface::{ITickTrait, UniswapV3PoolTrait, IERC20Trait};
+    use contracts::libraries::erc20::ERC20;
     use contracts::libraries::position::Position::IPositionImpl;
     use contracts::libraries::position::{Key, Position};
     use contracts::libraries::tick::Tick;
@@ -89,6 +90,10 @@ pub mod UniswapV3Pool {
 
             slot0.tick = next_tick;
             slot0.sqrt_pricex96 = next_price;
+
+            let mut erc20 = ERC20::unsafe_new_contract_state();
+
+            erc20.transfer(caller, amount0);
 
             (1, 1)
         }

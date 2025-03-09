@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod erc20 {
+pub mod ERC20 {
     use core::num::traits::Zero;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
