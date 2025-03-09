@@ -47,6 +47,22 @@ pub mod ERC20 {
         pub const MINT_TO_ZERO: felt252 = 'ERC20: mint to 0';
     }
 
+    #[constructor]
+    fn constructor(
+        ref self: ContractState,
+        recipient: ContractAddress,
+        name: felt252,
+        decimals: u8,
+        initial_supply: felt252,
+        symbol: felt252,
+    ) {
+        self.name.write(name);
+        self.symbol.write(symbol);
+        self.decimals.write(decimals);
+        self.mint(recipient, initial_supply);
+    }
+
+
     #[abi(embed_v0)]
     impl IERC20Impl of contracts::contract::interface::IERC20Trait<ContractState> {
         // read

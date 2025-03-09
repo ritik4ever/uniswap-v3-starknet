@@ -81,7 +81,7 @@ pub mod UniswapV3Pool {
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
         }
 
-        fn swap(ref self: ContractState) -> (i128, i128) {
+        fn swap(ref self: ContractState, callback_address: ContractAddress) -> (i128, i128) {
             let caller = get_caller_address();
             let mut slot0 = self.slot0.read();
 
@@ -113,7 +113,9 @@ pub mod UniswapV3Pool {
                 .unwrap();
 
             // execute callback to receive tokens
-            let callback_dispatcher = IUniswapV3SwapCallbackDispatcher { contract_address: caller };
+            let callback_dispatcher = IUniswapV3SwapCallbackDispatcher {
+                contract_address: callback_address,
+            };
             callback_dispatcher.swap_callback(amount0, amount1, array![]);
 
             let balance_after: u256 = erc20_1
@@ -121,6 +123,7 @@ pub mod UniswapV3Pool {
                 .try_into()
                 .unwrap();
             let required_amount1 = scale_amount(amount1, decimals1);
+
             assert(
                 balance_after - balance_before >= required_amount1, 'Insufficient USDC received',
             );

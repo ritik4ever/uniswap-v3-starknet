@@ -1,6 +1,7 @@
 mod utils;
 use contracts::contract::interface::{
-    UniswapV3PoolTraitDispatcher, UniswapV3PoolTraitDispatcherTrait,
+    IERC20TraitDispatcher, IERC20TraitDispatcherTrait, UniswapV3PoolTraitDispatcher,
+    UniswapV3PoolTraitDispatcherTrait,
 };
 use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use starknet::ContractAddress;
@@ -71,4 +72,58 @@ fn test_mint_liquidity_using_params() {
     let liquidity_after = dispatcher.get_liquidity();
     println!("liquidity after: {:?}", liquidity_after);
     assert(liquidity_after == params.liq.into(), 'Invalid liquidity after mint');
+}
+
+#[test]
+fn test_swap() {
+    let test_address: ContractAddress = 0x1234.try_into().unwrap();
+
+    let eth_calldata = array![
+        test_address.into(), // recipient
+        'ETH'.into(), // name
+        18_u8.into(), // decimals
+        1000000.into(), // initial_supply
+        'ETH'.into() // symbol
+    ];
+    let eth_address = deploy_contract("ERC20", eth_calldata);
+    let mut eth_token = IERC20TraitDispatcher { contract_address: eth_address };
+
+    let usdc_calldata = array![
+        test_address.into(), 'USDC'.into(), 6_u8.into(), 1000000.into(), 'USDC'.into(),
+    ];
+    let usdc_address = deploy_contract("ERC20", usdc_calldata);
+    let mut usdc_token = IERC20TraitDispatcher { contract_address: usdc_address };
+
+    let params = TestParamsImpl::test1params();
+
+    let pool_calldata = array![
+        eth_address.into(), // token0
+        usdc_address.into(), // token1
+        params.cur_sqrtp.try_into().unwrap(), // sqrt price
+        0.into(), // u256 low
+        params.cur_tick.into() // initial tick
+    ];
+    let pool_address = deploy_contract("UniswapV3Pool", pool_calldata);
+    let mut pool = UniswapV3PoolTraitDispatcher { contract_address: pool_address };
+
+    let callback_calldata = array![
+        eth_address.into(), // token0 address
+        usdc_address.into(), // token1 address
+        pool_address.into() // pool address
+    ];
+    let callback_address = deploy_contract("SwapCallbackHandler", callback_calldata);
+
+    eth_token.transfer(pool_address, 1000000);
+    usdc_token.transfer(pool_address, 1000000);
+
+    pool.mint(params.lower_tick, params.upper_tick, params.liq.try_into().unwrap());
+
+    usdc_token.transfer(callback_address, 42);
+
+    let (amount0, amount1) = pool.swap(callback_address);
+    println!("amount0: {}", amount0);
+    println!("amount1: {}", amount1);
+
+    assert(amount0 == -8396714242162444_i128, 'Invalid ETH out');
+    assert(amount1 == 42_i128, 'Invalid USDC in');
 }
