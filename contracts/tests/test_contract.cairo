@@ -77,7 +77,7 @@ fn test_mint_liquidity_using_params() {
 #[test]
 fn test_swap() {
     let test_address: ContractAddress = 0x1234.try_into().unwrap();
-
+    let recipient: ContractAddress = 0x222.try_into().unwrap();
     let eth_calldata = array![
         test_address.into(), // recipient
         'ETH'.into(), // name
@@ -120,7 +120,7 @@ fn test_swap() {
 
     usdc_token.transfer(callback_address, 42);
 
-    let (amount0, amount1) = pool.swap(callback_address);
+    let (amount0, amount1) = pool.swap(recipient, callback_address);
     println!("amount0: {}", amount0);
     println!("amount1: {}", amount1);
 

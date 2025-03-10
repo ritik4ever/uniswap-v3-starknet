@@ -54,7 +54,7 @@ pub mod UniswapV3Pool {
         amount1: i128,
         sqrt_pricex96: u256,
         liquidity: u256,
-        tick: i32
+        tick: i32,
     }
     #[constructor]
     fn constructor(
@@ -92,7 +92,9 @@ pub mod UniswapV3Pool {
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
         }
 
-        fn swap(ref self: ContractState, callback_address: ContractAddress) -> (i128, i128) {
+        fn swap(
+            ref self: ContractState, recipient: ContractAddress, callback_address: ContractAddress,
+        ) -> (i128, i128) {
             let caller = get_caller_address();
             let mut slot0 = self.slot0.read();
 
@@ -113,7 +115,7 @@ pub mod UniswapV3Pool {
             let mut erc20_0 = IERC20TraitDispatcher { contract_address: token0_addr };
             let decimals0 = erc20_0.get_decimals();
             let scaled_amount0 = scale_amount(-amount0, decimals0);
-            erc20_0.transfer(caller, scaled_amount0.try_into().unwrap());
+            erc20_0.transfer(recipient, scaled_amount0.try_into().unwrap());
 
             let token1_addr = self.token1.read();
             let mut erc20_1 = IERC20TraitDispatcher { contract_address: token1_addr };
@@ -139,15 +141,18 @@ pub mod UniswapV3Pool {
                 balance_after - balance_before >= required_amount1, 'Insufficient USDC received',
             );
 
-            self.emit( Swap {
-                sender: caller,
-                recipient: caller,
-                amount0,
-                amount1,
-                sqrt_pricex96: slot0.sqrt_pricex96,
-                liquidity: self.get_liquidity(),
-                tick: slot0.tick
-            });
+            self
+                .emit(
+                    Swap {
+                        sender: caller,
+                        recipient,
+                        amount0,
+                        amount1,
+                        sqrt_pricex96: slot0.sqrt_pricex96,
+                        liquidity: self.get_liquidity(),
+                        tick: slot0.tick,
+                    },
+                );
 
             (amount0, amount1)
         }
