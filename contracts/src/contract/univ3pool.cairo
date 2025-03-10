@@ -7,7 +7,7 @@ struct Slot0 {
 pub mod UniswapV3Pool {
     use contracts::contract::interface::{
         IERC20Trait, IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait,
-        IUniswapV3SwapCallbackDispatcher, IUniswapV3SwapCallbackDispatcherTrait, UniswapV3PoolTrait,
+        IUniswapV3ManagerDispatcher, IUniswapV3ManagerDispatcherTrait, UniswapV3PoolTrait,
     };
     use contracts::libraries::erc20::ERC20;
     use contracts::libraries::position::Position::IPositionImpl;
@@ -55,6 +55,7 @@ pub mod UniswapV3Pool {
         liquidity: u256,
         tick: i32,
     }
+
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -125,10 +126,10 @@ pub mod UniswapV3Pool {
                 .unwrap();
 
             // execute callback to receive tokens
-            let callback_dispatcher = IUniswapV3SwapCallbackDispatcher {
+            let manager_dispatcher = IUniswapV3ManagerDispatcher {
                 contract_address: callback_address,
             };
-            callback_dispatcher.swap_callback(amount0, amount1, array![]);
+            manager_dispatcher.swap_callback(amount0, amount1, array![]);
 
             let balance_after: u256 = erc20_1
                 .balance_of(get_contract_address())

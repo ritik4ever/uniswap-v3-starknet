@@ -19,6 +19,15 @@ pub trait IUniswapV3SwapCallback<TContractState> {
 }
 
 #[starknet::interface]
+pub trait IUniswapV3Manager<TContractState> {
+    fn mint_callback(ref self: TContractState, amount0: u128, amount1: u128, data: Array<felt252>);
+    fn swap_callback(
+        ref self: TContractState, amount0_delta: i128, amount1_delta: i128, data: Array<felt252>,
+    );
+    fn mint(ref self: TContractState, lower_tick: i32, upper_tick: i32, amount: u128);
+}
+
+#[starknet::interface]
 pub trait ITickTrait<TContractState> {
     fn update(ref self: TContractState, tick: i32, liq_delta: u128);
     fn is_init(self: @TContractState, tick: i32) -> bool;
