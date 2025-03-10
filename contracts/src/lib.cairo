@@ -1,5 +1,6 @@
 pub mod contract {
     pub mod interface;
+    pub mod univ3manager;
     pub mod univ3pool;
 }
 

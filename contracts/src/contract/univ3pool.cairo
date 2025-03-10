@@ -1,4 +1,3 @@
-// should have: reserve 0, reserve 1, liquidity, position holders map?,
 #[derive(Copy, Drop, Serde, starknet::Store)]
 struct Slot0 {
     sqrt_pricex96: u256,
