@@ -35,6 +35,7 @@ pub mod UniswapV3Pool {
     #[derive(Drop, starknet::Event)]
     enum Event {
         Mint: Mint,
+        Swap: Swap,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -45,6 +46,16 @@ pub mod UniswapV3Pool {
         amount: u128,
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct Swap {
+        sender: ContractAddress,
+        recipient: ContractAddress,
+        amount0: i128,
+        amount1: i128,
+        sqrt_pricex96: u256,
+        liquidity: u256,
+        tick: i32
+    }
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -127,6 +138,16 @@ pub mod UniswapV3Pool {
             assert(
                 balance_after - balance_before >= required_amount1, 'Insufficient USDC received',
             );
+
+            self.emit( Swap {
+                sender: caller,
+                recipient: caller,
+                amount0,
+                amount1,
+                sqrt_pricex96: slot0.sqrt_pricex96,
+                liquidity: self.get_liquidity(),
+                tick: slot0.tick
+            });
 
             (amount0, amount1)
         }
