@@ -75,7 +75,13 @@ mod UniswapV3Manager {
             }
         }
 
-        fn mint(ref self: ContractState, lower_tick: i32, upper_tick: i32, amount: u128, data: Array<felt252>) {
+        fn mint(
+            ref self: ContractState,
+            lower_tick: i32,
+            upper_tick: i32,
+            amount: u128,
+            data: Array<felt252>,
+        ) {
             let pool_address = self.pool_address.read();
             let mut pool = UniswapV3PoolTraitDispatcher { contract_address: pool_address };
 

@@ -81,7 +81,13 @@ pub mod UniswapV3Pool {
     }
     #[abi(embed_v0)]
     impl IUniswapV3PoolImpl of UniswapV3PoolTrait<ContractState> {
-        fn mint(ref self: ContractState, lower_tick: i32, upper_tick: i32, amount: u128, data: Array<felt252>) -> (u256, u256) {
+        fn mint(
+            ref self: ContractState,
+            lower_tick: i32,
+            upper_tick: i32,
+            amount: u128,
+            data: Array<felt252>,
+        ) -> (u256, u256) {
             assert!(lower_tick > MIN_TICK, "lower tick too low");
             assert!(upper_tick < MAX_TICK, "upper tick too high");
             assert!(lower_tick <= upper_tick, "lower tick must be lower or equal to upper tick");
@@ -97,15 +103,20 @@ pub mod UniswapV3Pool {
             let new_liq = position_state.get(key).liq;
             self.liquidity.write(new_liq.into());
 
-            let manager_dispatcher = IUniswapV3ManagerDispatcher { contract_address: get_caller_address() };
-            manager_dispatcher.mint_callback(1,1,data);
+            let manager_dispatcher = IUniswapV3ManagerDispatcher {
+                contract_address: get_caller_address(),
+            };
+            manager_dispatcher.mint_callback(1, 1, data);
 
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
-            (1,1)
+            (1, 1)
         }
 
         fn swap(
-            ref self: ContractState, recipient: ContractAddress, callback_address: ContractAddress, data: Array<felt252>
+            ref self: ContractState,
+            recipient: ContractAddress,
+            callback_address: ContractAddress,
+            data: Array<felt252>,
         ) -> (i128, i128) {
             let caller = get_caller_address();
             let mut slot0 = self.slot0.read();
