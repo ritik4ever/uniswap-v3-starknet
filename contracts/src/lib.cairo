@@ -6,8 +6,12 @@ pub mod contract {
 
 pub mod libraries {
     pub mod erc20;
+    pub mod math {
+        pub mod numbers {
+            pub mod fixed_point;
+        }
+    }
     pub mod position;
-    pub mod swap_callback_handler;
     pub mod tick;
     pub mod utils {
         pub mod math;
