@@ -177,6 +177,49 @@ def test_calc_amounts():
     assert amount0 == expected_amount0, f"Expected amount0 {expected_amount0}, got {amount0}"
     assert amount1 == expected_amount1, f"Expected amount1 {expected_amount1}, got {amount1}"
 
+def test_swap_eth_for_usdc():
+    eth = 10**18
+    current_sqrtp = 5602277097478614198912276234240
+    liquidity = 1517882343751509868544
+    
+    # Swap: selling ETH for USDC
+    amount_in = 0.01337 * eth
+
+    print(f"\n[DEBUG] Selling {amount_in/eth} ETH for USDC")
+    
+    # For selling ETH (token0), the price (sqrtP) decreases
+    # Formula differs from selling token1
+    price_next = int((liquidity * q96 * current_sqrtp) // (liquidity * q96 + amount_in * current_sqrtp))
+    
+    new_price = (price_next / q96) ** 2
+    new_tick = price_to_tick(new_price)
+    
+    print(f"    current_sqrtp  = {current_sqrtp}")
+    print(f"    liquidity      = {liquidity}")
+    print(f"    amount_in      = {amount_in}")
+    print(f"    New price      = {new_price}")
+    print(f"    New sqrtP      = {price_next}")
+    print(f"    New tick       = {new_tick}")
+    
+    amount_in_calculated = calc_amount0(liquidity, price_next, current_sqrtp)
+    amount_out_calculated = calc_amount1(liquidity, price_next, current_sqrtp)
+    
+    print(f"    ETH in         = {amount_in_calculated / eth}")
+    print(f"    USDC out       = {amount_out_calculated / eth}")
+    
+    # expected_price_next = 5598789932670289186088059666432
+    expected_new_price = 4993.777388290041
+    expected_eth_in = 0.013369999999998142
+    expected_usdc_out = 66.80838889019013
+    
+    assert math.isclose(new_price, expected_new_price, rel_tol=1e-9), \
+        f"Expected new_price {expected_new_price}, got {new_price}"
+    assert math.isclose(amount_in_calculated / eth, expected_eth_in, rel_tol=1e-9), \
+        f"Expected ETH in {expected_eth_in}, got {amount_in_calculated / eth}"
+    assert math.isclose(amount_out_calculated / eth, expected_usdc_out, rel_tol=1e-9), \
+        f"Expected USDC out {expected_usdc_out}, got {amount_out_calculated / eth}"
+
+
 
 if __name__ == '__main__':
     test_price_to_tick()
@@ -185,3 +228,4 @@ if __name__ == '__main__':
     test_calc_amounts()
     test_swap_calculation()
     test_swap_calculation_strk()
+    test_swap_eth_for_usdc()
