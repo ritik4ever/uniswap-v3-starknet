@@ -12,6 +12,7 @@ pub mod libraries {
             pub mod fixed_point;
         }
         pub mod sqrtprice_math;
+        pub mod tick_math;
     }
     pub mod position;
     pub mod tick;
