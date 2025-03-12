@@ -7,9 +7,11 @@ pub mod contract {
 pub mod libraries {
     pub mod erc20;
     pub mod math {
+        pub mod fullmath;
         pub mod numbers {
             pub mod fixed_point;
         }
+        pub mod sqrtprice_math;
     }
     pub mod position;
     pub mod tick;

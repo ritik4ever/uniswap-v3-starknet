@@ -1,7 +1,7 @@
 /// Q64.96 representation for sqrt prices.
 #[derive(Debug, Drop, Serde, Clone, starknet::Store)]
 pub struct FixedQ64x96 {
-    value: u256,
+    pub value: u256,
 }
 
 /// The minimum value that can be returned from #getSqrtRatioAtTick. Equivalent to
@@ -18,7 +18,7 @@ const ONE: u256 = 79228162514264337593543950336; // 2^96
 const HALF: u256 = 39614081257132168796771975168; // 2^95
 
 #[generate_trait]
-impl IFixedQ64x96Impl of IFixedQ64x96Trait {
+pub impl IFixedQ64x96Impl of IFixedQ64x96Trait {
     fn new(value: u256) -> FixedQ64x96 {
         assert(value <= MAX_SQRT_RATIO, 'sqrt ratio overflow');
         assert(value >= MIN_SQRT_RATIO, 'sqrt ratio underflow');
