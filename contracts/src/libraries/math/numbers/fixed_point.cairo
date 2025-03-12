@@ -19,6 +19,7 @@ const HALF: u256 = 39614081257132168796771975168; // 2^95
 
 #[generate_trait]
 pub impl IFixedQ64x96Impl of IFixedQ64x96Trait {
+    #[inline(always)]
     fn new(value: u256) -> FixedQ64x96 {
         assert(value <= MAX_SQRT_RATIO, 'sqrt ratio overflow');
         assert(value >= MIN_SQRT_RATIO, 'sqrt ratio underflow');
