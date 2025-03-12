@@ -55,6 +55,9 @@ impl IFixedQ64x96Impl of IFixedQ64x96Trait {
     fn eq(self: FixedQ64x96, other: FixedQ64x96) -> bool {
         self.value == other.value
     }
+    fn ne(self: FixedQ64x96, other: FixedQ64x96) -> bool {
+        self.value != other.value
+    }
 
     /// Floor operation - round down to the nearest integer
     fn floor(self: FixedQ64x96) -> FixedQ64x96 {
@@ -71,8 +74,18 @@ impl IFixedQ64x96Impl of IFixedQ64x96Trait {
         self.value > other.value
     }
 
+    /// <=
+    fn le(self: FixedQ64x96, other: FixedQ64x96) -> bool {
+        self.value <= other.value
+    }
+    /// <
+    fn lt(self: FixedQ64x96, other: FixedQ64x96) -> bool {
+        self.value < other.value
+    }
+
+
     fn sub(self: FixedQ64x96, other: FixedQ64x96) -> FixedQ64x96 {
-        assert(self.value >= other.value, 'sqrt price underlow');
+        assert(self.value >= other.value, 'sqrt price underflow');
         FixedQ64x96 { value: self.value - other.value }
     }
 
@@ -97,5 +110,71 @@ impl IFixedQ64x96Impl of IFixedQ64x96Trait {
         }
 
         FixedQ64x96 { value: y }
+    }
+}
+
+impl FP64x96Into of Into<FixedQ64x96, felt252> {
+    fn into(self: FixedQ64x96) -> felt252 {
+        let value_felt = self.value.try_into().unwrap();
+
+        value_felt
+    }
+}
+
+impl FP64x96PartialEq of PartialEq<FixedQ64x96> {
+    #[inline(always)]
+    fn eq(lhs: @FixedQ64x96, rhs: @FixedQ64x96) -> bool {
+        return IFixedQ64x96Impl::eq(lhs.clone(), rhs.clone());
+    }
+
+    #[inline(always)]
+    fn ne(lhs: @FixedQ64x96, rhs: @FixedQ64x96) -> bool {
+        return IFixedQ64x96Impl::ne(lhs.clone(), rhs.clone());
+    }
+}
+
+impl FP64x96Add of Add<FixedQ64x96> {
+    fn add(lhs: FixedQ64x96, rhs: FixedQ64x96) -> FixedQ64x96 {
+        return IFixedQ64x96Impl::add(lhs, rhs);
+    }
+}
+
+impl FP64x96Sub of Sub<FixedQ64x96> {
+    fn sub(lhs: FixedQ64x96, rhs: FixedQ64x96) -> FixedQ64x96 {
+        return IFixedQ64x96Impl::sub(lhs, rhs);
+    }
+}
+
+impl FP64x96Mul of Mul<FixedQ64x96> {
+    fn mul(lhs: FixedQ64x96, rhs: FixedQ64x96) -> FixedQ64x96 {
+        return IFixedQ64x96Impl::mul(lhs, rhs);
+    }
+}
+
+impl FP64x96Div of Div<FixedQ64x96> {
+    fn div(lhs: FixedQ64x96, rhs: FixedQ64x96) -> FixedQ64x96 {
+        return IFixedQ64x96Impl::div(lhs, rhs);
+    }
+}
+
+impl FP64x96PartialOrd of PartialOrd<FixedQ64x96> {
+    #[inline(always)]
+    fn ge(lhs: FixedQ64x96, rhs: FixedQ64x96) -> bool {
+        return IFixedQ64x96Impl::ge(lhs, rhs);
+    }
+
+    #[inline(always)]
+    fn gt(lhs: FixedQ64x96, rhs: FixedQ64x96) -> bool {
+        return IFixedQ64x96Impl::gt(lhs, rhs);
+    }
+
+    #[inline(always)]
+    fn le(lhs: FixedQ64x96, rhs: FixedQ64x96) -> bool {
+        return IFixedQ64x96Impl::le(lhs, rhs);
+    }
+
+    #[inline(always)]
+    fn lt(lhs: FixedQ64x96, rhs: FixedQ64x96) -> bool {
+        return IFixedQ64x96Impl::lt(lhs, rhs);
     }
 }
