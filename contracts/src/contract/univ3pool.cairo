@@ -7,8 +7,10 @@ struct Slot0 {
 pub mod UniswapV3Pool {
     use contracts::contract::interface::{
         IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait, IUniswapV3ManagerDispatcher,
-        IUniswapV3ManagerDispatcherTrait, UniswapV3PoolTrait,
+        IUniswapV3ManagerDispatcherTrait, IUniswapV3TickBitmap, IUniswapV3TickBitmapDispatcher,
+        UniswapV3PoolTrait,
     };
+    use contracts::contract::univ3tick_bitmap::TickBitmap;
     use contracts::libraries::position::Position::IPositionImpl;
     use contracts::libraries::position::{Key, Position};
     use contracts::libraries::tick::Tick;
@@ -93,10 +95,27 @@ pub mod UniswapV3Pool {
             assert!(amount != 0, "liq amount must be > 0");
 
             let key = Key { owner: get_caller_address(), lower_tick, upper_tick };
+
             let mut tick_state = Tick::unsafe_new_contract_state();
             let mut position_state = Position::unsafe_new_contract_state();
-            tick_state.update(lower_tick, amount);
-            tick_state.update(upper_tick, amount);
+            let mut bitmap_state = TickBitmap::unsafe_new_contract_state();
+
+            let tick_spacing = 1;
+
+            let liq_delta = amount.try_into().expect('liq_delta');
+
+            let flipped_lower = tick_state.update(lower_tick, liq_delta, false);
+
+            let flipped_upper = tick_state.update(upper_tick, liq_delta, true);
+
+            if flipped_lower {
+                bitmap_state.flip_tick(lower_tick, tick_spacing);
+            }
+
+            if flipped_upper {
+                bitmap_state.flip_tick(upper_tick, tick_spacing);
+            }
+
             position_state.update(key, amount);
 
             let new_liq = position_state.get(key).liq;
@@ -105,11 +124,16 @@ pub mod UniswapV3Pool {
             let manager_dispatcher = IUniswapV3ManagerDispatcher {
                 contract_address: get_caller_address(),
             };
+
+            // TODO: Calculate actual token amounts instead of using hardcoded values
             manager_dispatcher.mint_callback(1, 1, data);
 
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
+
+            // TODO: Return actual token amounts
             (1, 1)
         }
+
 
         fn swap(
             ref self: ContractState,

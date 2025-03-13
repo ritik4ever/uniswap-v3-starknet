@@ -146,7 +146,10 @@ fn test_swap() {
 
     manager
         .mint(
-            params.lower_tick, params.upper_tick, params.liq.try_into().unwrap(), array![].into(),
+            params.lower_tick,
+            params.upper_tick,
+            params.liq.try_into().expect('params'),
+            array![].into(),
         );
 
     let (amount0, amount1) = pool.swap(recipient, manager_address, array![].into());

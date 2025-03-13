@@ -45,7 +45,7 @@ pub trait IUniswapV3Manager<TContractState> {
 
 #[starknet::interface]
 pub trait ITickTrait<TContractState> {
-    fn update(ref self: TContractState, tick: i32, liq_delta: u128);
+    fn update(ref self: TContractState, tick: i32, liq_delta: i128, upper: bool) -> bool;
     fn is_init(self: @TContractState, tick: i32) -> bool;
 }
 

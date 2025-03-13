@@ -1,5 +1,5 @@
 #[starknet::contract]
-mod TickBitmap {
+pub mod TickBitmap {
     use alexandria_math::const_pow::pow2_u256;
     use contracts::contract::interface::IUniswapV3TickBitmap;
     use contracts::libraries::utils::math::{least_significant_bit, most_significant_bit, u256_max};
