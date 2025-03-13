@@ -23,7 +23,6 @@ pub mod Tick {
         fn update(ref self: ContractState, tick: i32, liq_delta: i128, upper: bool) -> bool {
             let mut info = self.ticks.read(tick.into());
 
-            // Calculate liquidity before and after
             let liq_before = info.liq_gross;
             let liq_after = if liq_delta > 0 {
                 liq_before + liq_delta.try_into().unwrap()

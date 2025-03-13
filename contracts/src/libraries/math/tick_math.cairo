@@ -17,7 +17,7 @@ pub mod TickMath {
     /// Calculates sqrt(1.0001^tick) * 2^96
     /// @param tick The tick for which to compute the sqrt ratio
     /// @return The sqrt ratio as a Q64.96 fixed point number
-    fn get_sqrt_ratio_at_tick(tick: i32) -> FixedQ64x96 {
+    pub fn get_sqrt_ratio_at_tick(tick: i32) -> FixedQ64x96 {
         // Validate tick is within bounds
         assert(tick >= MIN_TICK, 'Tick below MIN_TICK');
         assert(tick <= MAX_TICK, 'Tick above MAX_TICK');

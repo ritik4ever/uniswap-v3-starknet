@@ -7,10 +7,14 @@ struct Slot0 {
 pub mod UniswapV3Pool {
     use contracts::contract::interface::{
         IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait, IUniswapV3ManagerDispatcher,
-        IUniswapV3ManagerDispatcherTrait, IUniswapV3TickBitmap, IUniswapV3TickBitmapDispatcher,
-        UniswapV3PoolTrait,
+        IUniswapV3ManagerDispatcherTrait, IUniswapV3TickBitmap, UniswapV3PoolTrait,
     };
     use contracts::contract::univ3tick_bitmap::TickBitmap;
+    use contracts::libraries::math::liquidity_math::LiquidityMath::{
+        calc_amount0_delta, calc_amount1_delta,
+    };
+    use contracts::libraries::math::numbers::fixed_point::FixedQ64x96;
+    use contracts::libraries::math::tick_math::TickMath;
     use contracts::libraries::position::Position::IPositionImpl;
     use contracts::libraries::position::{Key, Position};
     use contracts::libraries::tick::Tick;
@@ -93,19 +97,47 @@ pub mod UniswapV3Pool {
             assert!(upper_tick < MAX_TICK, "upper tick too high");
             assert!(lower_tick <= upper_tick, "lower tick must be lower or equal to upper tick");
             assert!(amount != 0, "liq amount must be > 0");
+            #[cairofmt::skip]
+            // TODO: uncomment this when we have custom tick_spacing.
+            // assert!(lower_tick % tick_spacing == 0 && upper_tick % tick_spacing == 0, "tick not divisible by spacing")
+
+            let slot0 = self.slot0.read();
+            let current_tick = slot0.tick;
+            let current_sqrt_price = slot0.sqrt_pricex96;
+            let current_sqrt_price_x96 = FixedQ64x96 { value: current_sqrt_price };
+
+            let sqrt_price_lower_x96 = TickMath::get_sqrt_ratio_at_tick(lower_tick);
+            let sqrt_price_upper_x96 = TickMath::get_sqrt_ratio_at_tick(upper_tick);
+
+            let (amount0, amount1) = if current_tick < lower_tick {
+                let amount0 = calc_amount0_delta(
+                    sqrt_price_lower_x96, sqrt_price_upper_x96, amount,
+                );
+                (amount0, 0_u256)
+            } else if current_tick < upper_tick {
+                let amount0 = calc_amount0_delta(
+                    current_sqrt_price_x96.clone(), sqrt_price_upper_x96, amount,
+                );
+                let amount1 = calc_amount1_delta(
+                    sqrt_price_lower_x96, current_sqrt_price_x96, amount,
+                );
+                (amount0, amount1)
+            } else {
+                let amount1 = calc_amount1_delta(
+                    sqrt_price_lower_x96, sqrt_price_upper_x96, amount,
+                );
+                (0_u256, amount1)
+            };
 
             let key = Key { owner: get_caller_address(), lower_tick, upper_tick };
-
             let mut tick_state = Tick::unsafe_new_contract_state();
             let mut position_state = Position::unsafe_new_contract_state();
             let mut bitmap_state = TickBitmap::unsafe_new_contract_state();
 
-            let tick_spacing = 1;
-
+            let tick_spacing = 1; // will be customisable later
             let liq_delta = amount.try_into().expect('liq_delta');
 
             let flipped_lower = tick_state.update(lower_tick, liq_delta, false);
-
             let flipped_upper = tick_state.update(upper_tick, liq_delta, true);
 
             if flipped_lower {
@@ -117,21 +149,21 @@ pub mod UniswapV3Pool {
             }
 
             position_state.update(key, amount);
-
             let new_liq = position_state.get(key).liq;
             self.liquidity.write(new_liq.into());
+
+            let amount0_u128: u128 = amount0.try_into().unwrap_or(0);
+            let amount1_u128: u128 = amount1.try_into().unwrap_or(0);
 
             let manager_dispatcher = IUniswapV3ManagerDispatcher {
                 contract_address: get_caller_address(),
             };
 
-            // TODO: Calculate actual token amounts instead of using hardcoded values
-            manager_dispatcher.mint_callback(1, 1, data);
+            manager_dispatcher.mint_callback(amount0_u128, amount1_u128, data);
 
             self.emit(Mint { sender: get_caller_address(), upper_tick, lower_tick, amount });
 
-            // TODO: Return actual token amounts
-            (1, 1)
+            (amount0, amount1)
         }
 
 

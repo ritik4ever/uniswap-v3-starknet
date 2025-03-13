@@ -9,6 +9,7 @@ pub mod libraries {
     pub mod erc20;
     pub mod math {
         pub mod fullmath;
+        pub mod liquidity_math;
         pub mod numbers {
             pub mod fixed_point;
         }
