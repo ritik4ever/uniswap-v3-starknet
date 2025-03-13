@@ -6,10 +6,9 @@ struct Slot0 {
 #[starknet::contract]
 pub mod UniswapV3Pool {
     use contracts::contract::interface::{
-        IERC20Trait, IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait,
-        IUniswapV3ManagerDispatcher, IUniswapV3ManagerDispatcherTrait, UniswapV3PoolTrait,
+        IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait, IUniswapV3ManagerDispatcher,
+        IUniswapV3ManagerDispatcherTrait, UniswapV3PoolTrait,
     };
-    use contracts::libraries::erc20::ERC20;
     use contracts::libraries::position::Position::IPositionImpl;
     use contracts::libraries::position::{Key, Position};
     use contracts::libraries::tick::Tick;

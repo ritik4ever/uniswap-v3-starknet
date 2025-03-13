@@ -21,10 +21,11 @@ pub trait UniswapV3PoolTrait<TContractState> {
 }
 
 #[starknet::interface]
-pub trait IUniswapV3SwapCallback<TContractState> {
-    fn swap_callback(
-        ref self: TContractState, amount0_delta: i128, amount1_delta: i128, data: Array<felt252>,
-    );
+pub trait IUniswapV3TickBitmap<TContractState> {
+    fn flip_tick(ref self: TContractState, tick: i32, tick_spacing: i32);
+    fn next_initialized_tick_within_one_word(
+        self: @TContractState, tick: i32, tick_spacing: i32, lte: bool,
+    ) -> (i32, bool);
 }
 
 #[starknet::interface]
