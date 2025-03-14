@@ -1,3 +1,5 @@
+use core::integer::u256_sqrt;
+use core::num::traits::Sqrt;
 /// Q64.96 representation for sqrt prices.
 #[derive(Debug, Drop, Serde, Clone, starknet::Store)]
 pub struct FixedQ64x96 {
@@ -21,7 +23,7 @@ pub const HALF: u256 = 39614081257132168796771975168; // 2^95
 pub impl IFixedQ64x96Impl of IFixedQ64x96Trait {
     #[inline(always)]
     fn new(value: u256) -> FixedQ64x96 {
-        assert(value <= MAX_SQRT_RATIO, 'sqrt ratio overflow');
+        assert(value < MAX_SQRT_RATIO, 'sqrt ratio overflow');
         assert(value >= MIN_SQRT_RATIO, 'sqrt ratio underflow');
         FixedQ64x96 { value }
     }
@@ -96,22 +98,24 @@ pub impl IFixedQ64x96Impl of IFixedQ64x96Trait {
         FixedQ64x96 { value: product }
     }
 
-    /// sqrt operation based on Newton-Raphson method for sqrt
     fn sqrt(self: FixedQ64x96) -> FixedQ64x96 {
         if self.value == 0 {
             return FixedQ64x96 { value: 0 };
         }
-
-        let mut z = (self.value + ONE) / 2;
-        let mut y = self.value;
-
-        while z < y {
-            y = z;
-            z = (self.value / z + z) / 2;
+        
+        let root: u256 = u256_sqrt(self.value).into();
+        let scale_root: u256 = u256_sqrt(ONE).into();
+        
+        let result: u256 = root * ONE / scale_root;
+        
+        // handle the case where result would be below MIN_SQRT_RATIO
+        if result < MIN_SQRT_RATIO && result > 0 {
+            return FixedQ64x96 { value: MIN_SQRT_RATIO };
         }
-
-        FixedQ64x96 { value: y }
+        
+        FixedQ64x96 { value: result }
     }
+    
 }
 
 impl FP64x96Into of Into<FixedQ64x96, felt252> {
