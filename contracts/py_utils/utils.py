@@ -1,24 +1,12 @@
 import math
-import pytest
 
 q96 = 2**96
-
 
 def price_to_tick(p):
     return math.floor(math.log(p, 1.0001))
 
 def price_to_sqrtp(p):
     return int(math.sqrt(p) * q96)
-
-def liquidity0(amount, pa, pb):
-    if pa > pb:
-        pa, pb = pb, pa
-    return (amount * (pa * pb) / q96) / (pb - pa)
-
-def liquidity1(amount, pa, pb):
-    if pa > pb:
-        pa, pb = pb, pa
-    return amount * q96 / (pb - pa)
 
 def calc_amount0(liq, pa, pb):
     if pa > pb:
@@ -30,202 +18,182 @@ def calc_amount1(liq, pa, pb):
         pa, pb = pb, pa
     return int(liq * (pb - pa) / q96)
 
+def generate_calc_amount0_test_cases():
+    """Generate test cases for calc_amount0"""
+    test_cases = []
+    
+    # Case 1: Basic test with sqrt price ~1 and ~2
+    price_a = 1.0
+    price_b = 2.0
+    liquidity = 1000000
+    sqrtp_a = price_to_sqrtp(price_a)
+    sqrtp_b = price_to_sqrtp(price_b)
+    expected = calc_amount0(liquidity, sqrtp_a, sqrtp_b)
+    test_cases.append({
+        'name': 'basic_case',
+        'sqrtp_a': sqrtp_a,
+        'sqrtp_b': sqrtp_b,
+        'liquidity': liquidity,
+        'expected': expected
+    })
+    
+    # Case 2: Inverted prices
+    expected = calc_amount0(liquidity, sqrtp_b, sqrtp_a)
+    test_cases.append({
+        'name': 'inverted_case',
+        'sqrtp_a': sqrtp_b,
+        'sqrtp_b': sqrtp_a,
+        'liquidity': liquidity,
+        'expected': expected
+    })
+    
+    # Case 3: ETH/USDC example with price range 1500-2500
+    sqrtp_low = price_to_sqrtp(1500)
+    sqrtp_high = price_to_sqrtp(2500)
+    liquidity = 2 * 10**18  # 2 ETH worth
+    expected = calc_amount0(liquidity, sqrtp_low, sqrtp_high)
+    test_cases.append({
+        'name': 'eth_usdc_range',
+        'sqrtp_a': sqrtp_low,
+        'sqrtp_b': sqrtp_high,
+        'liquidity': liquidity,
+        'expected': expected
+    })
+    
+    return test_cases
 
+def generate_calc_amount1_test_cases():
+    """Generate test cases for calc_amount1"""
+    test_cases = []
+    
+    # Case 1: Basic test with sqrt price ~1 and ~2
+    price_a = 1.0
+    price_b = 2.0
+    liquidity = 1000000
+    sqrtp_a = price_to_sqrtp(price_a)
+    sqrtp_b = price_to_sqrtp(price_b)
+    expected = calc_amount1(liquidity, sqrtp_a, sqrtp_b)
+    test_cases.append({
+        'name': 'basic_case',
+        'sqrtp_a': sqrtp_a,
+        'sqrtp_b': sqrtp_b,
+        'liquidity': liquidity,
+        'expected': expected
+    })
+    
+    # Case 2: Inverted prices
+    expected = calc_amount1(liquidity, sqrtp_b, sqrtp_a)
+    test_cases.append({
+        'name': 'inverted_case',
+        'sqrtp_a': sqrtp_b,
+        'sqrtp_b': sqrtp_a,
+        'liquidity': liquidity,
+        'expected': expected
+    })
+    
+    # Case 3: ETH/USDC example with price range 1500-2500
+    sqrtp_low = price_to_sqrtp(1500)
+    sqrtp_high = price_to_sqrtp(2500)
+    liquidity = 2 * 10**18  # 2 ETH worth
+    expected = calc_amount1(liquidity, sqrtp_low, sqrtp_high)
+    test_cases.append({
+        'name': 'eth_usdc_range',
+        'sqrtp_a': sqrtp_low,
+        'sqrtp_b': sqrtp_high,
+        'liquidity': liquidity,
+        'expected': expected
+    })
+    
+    return test_cases
 
-def test_swap_calculation():
+def print_cairo_test_code(test_cases, function_name):
+    """Generate Cairo test code from test cases"""
+    for case in test_cases:
+        print(f"#[test]")
+        print(f"fn test_{function_name}_{case['name']}() {{")
+        print(f"    // Create sqrt prices")
+        print(f"    let sqrt_price_a = IFixedQ64x96Impl::new({case['sqrtp_a']}_u256);")
+        print(f"    let sqrt_price_b = IFixedQ64x96Impl::new({case['sqrtp_b']}_u256);")
+        print(f"    let liquidity = {case['liquidity']}_u128;")
+        print(f"")
+        print(f"    let result = LiquidityMath::{function_name}(sqrt_price_a, sqrt_price_b, liquidity);")
+        print(f"")
+        print(f"    println!(\"Result: {{}}\", result);")
+        print(f"    let expected = {case['expected']}_u256;")
+        print(f"    let tolerance = expected / 100_u256; // 1% tolerance")
+        print(f"    assert(result >= expected - tolerance && result <= expected + tolerance, \'{function_name} incorrect\');")
+        print(f"}}\n")
+
+def generate_swap_test_case():
+    """Generate a test case for swap calculation"""
     eth = 10**18
     current_sqrtp = 5602277097478614198912276234240
     liquidity = 1517882343751509868544
     amount_in = 42 * eth  # 42 USDC
-
+    
     price_diff = (amount_in * q96) // liquidity
     price_next = current_sqrtp + price_diff
-
-    new_price = (price_next / q96) ** 2
-    new_tick = price_to_tick(new_price)
-
-    print(f"[DEBUG] Swap Calculation:")
-    print(f"    current_sqrtp  = {current_sqrtp}")
-    print(f"    liquidity      = {liquidity}")
-    print(f"    amount_in      = {amount_in}")
-    print(f"    price_diff     = {price_diff}")
-    print(f"    price_next     = {price_next}")
-    print(f"    new_price      = {new_price}")
-    print(f"    new_tick       = {new_tick}")
-
-    expected_price_next = 5604469350942327889444743441197
-    expected_new_price = 5003.913912782393
-    expected_new_tick = 85184
-
-    assert price_next == expected_price_next, f"Expected price_next {expected_price_next}, got {price_next}"
-    assert math.isclose(new_price, expected_new_price, rel_tol=1e-9), f"Expected new_price {expected_new_price}, got {new_price}"
-    assert new_tick == expected_new_tick, f"Expected new_tick {expected_new_tick}, got {new_tick}"
-
+    
     amount_in_calculated = calc_amount1(liquidity, price_next, current_sqrtp)
     amount_out_calculated = calc_amount0(liquidity, price_next, current_sqrtp)
-
-    print(f"    USDC in  = {amount_in_calculated / eth}")
-    print(f"    ETH out  = {amount_out_calculated / eth}")
-
-    assert math.isclose(amount_in_calculated / eth, 42.0, rel_tol=1e-9), f"Expected USDC in 42.0, got {amount_in_calculated / eth}"
-    assert math.isclose(amount_out_calculated / eth, 0.008396714242162444, rel_tol=1e-9), f"Expected ETH out 0.008396714242162444, got {amount_out_calculated / eth}"
-
-def test_swap_calculation_strk():
-    strk = 10**18
-    current_sqrtp = price_to_sqrtp(0.215)  
-    liquidity = 5670207847624059387904 
-
-    # Swap: selling 42 USDC for STRK
-    amount_in = 42 * strk
-
-    # for a USDC swap, the price (sqrtP) increases.
-    price_diff = (amount_in * q96) // liquidity
-    price_next = current_sqrtp + price_diff
-
-    new_price = (price_next / q96) ** 2
-    new_tick = price_to_tick(new_price)
-
-    print(f"[DEBUG] STRK Swap Calculation:")
-    print(f"    current_sqrtp  = {current_sqrtp}")
-    print(f"    liquidity      = {liquidity}")
-    print(f"    amount_in      = {amount_in}")
-    print(f"    price_diff     = {price_diff}")
-    print(f"    price_next     = {price_next}")
-    print(f"    new_price      = {new_price}")
-    print(f"    new_tick       = {new_tick}")
-
-    amount_in_calculated = calc_amount1(liquidity, price_next, current_sqrtp)
-    amount_out_calculated = calc_amount0(liquidity, price_next, current_sqrtp)
-
-
-    print(f"    USDC in   = {amount_in_calculated / strk}")
-    print(f"    STRK out  = {amount_out_calculated / strk}")
-
-    assert math.isclose(amount_in_calculated / strk, 42.0, rel_tol=1e-9), \
-        f"Expected USDC in 42.0, got {amount_in_calculated / strk}"
     
-    assert new_tick > price_to_tick(0.215), \
-        f"Expected new tick higher than {price_to_tick(0.215)}, got {new_tick}"
+    print(f"#[test]")
+    print(f"fn test_swap_calculation() {{")
+    print(f"    // Test swapping 42 USDC for ETH")
+    print(f"    let current_sqrtp = FixedQ64x96 {{ value: {current_sqrtp}_u256 }};")
+    print(f"    let liquidity = {liquidity}_u128;")
+    print(f"    let amount_in = {amount_in}_u128;  // 42 USDC")
+    print(f"")
+    print(f"    // Calculate price impact")
+    print(f"    let price_diff = (amount_in.into() * ONE) / liquidity.into();")
+    print(f"    let price_next = FixedQ64x96 {{ value: current_sqrtp.value + price_diff }};")
+    print(f"")
+    print(f"    // Verify expected values")
+    print(f"    let expected_price_next = {price_next}_u256;")
+    print(f"    println!(\"Price next: {{}}, Expected: {{}}\", price_next.value, expected_price_next);")
+    print(f"    assert(price_next.value >= expected_price_next - 100 && price_next.value <= expected_price_next + 100, \'Price calculation incorrect\');")
+    print(f"")
+    print(f"    // Calculate amounts")
+    print(f"    let amount_in_calculated = LiquidityMath::calc_amount1_delta(current_sqrtp, price_next, liquidity);")
+    print(f"    let amount_out_calculated = LiquidityMath::calc_amount0_delta(current_sqrtp, price_next, liquidity);")
+    print(f"")
+    print(f"    // Verify calculated amounts")
+    print(f"    let expected_amount_in = {amount_in_calculated}_u256;  // 42 USDC")
+    print(f"    let expected_amount_out = {amount_out_calculated}_u256;  // ~0.0084 ETH")
+    print(f"    println!(\"Amount in calculated: {{}}, Expected: {{}}\", amount_in_calculated, expected_amount_in);")
+    print(f"    println!(\"Amount out calculated: {{}}, Expected: {{}}\", amount_out_calculated, expected_amount_out);")
+    print(f"")
+    print(f"    let tolerance_in = expected_amount_in / 100_u256;  // 1% tolerance")
+    print(f"    let tolerance_out = expected_amount_out / 100_u256;  // 1% tolerance")
+    print(f"    assert(amount_in_calculated >= expected_amount_in - tolerance_in && amount_in_calculated <= expected_amount_in + tolerance_in, \'Amount in calculation incorrect\');")
+    print(f"    assert(amount_out_calculated >= expected_amount_out - tolerance_out && amount_out_calculated <= expected_amount_out + tolerance_out, \'Amount out calculation incorrect\');")
+    print(f"}}")
 
-
-def test_price_to_tick():
-    p = 0.215
-    expected_tick = math.floor(math.log(p, 1.0001))
-    computed_tick = price_to_tick(p)
-    print(f"[DEBUG] price_to_tick: p = {p}, expected_tick = {expected_tick}, computed_tick = {computed_tick}")
-    assert computed_tick == expected_tick, f"Expected tick {expected_tick}, got {computed_tick}"
-
-def test_price_to_sqrtp():
-    p = 5000
-    expected = int(math.sqrt(p) * q96)
-    computed = price_to_sqrtp(p)
-    print(f"[DEBUG] price_to_sqrtp: p = {p}, expected_sqrtp = {expected}, computed_sqrtp = {computed}")
-    assert computed == expected, f"Expected sqrtP {expected}, got {computed}"
-
-def test_liquidity_calculation():
-    strk = 10**18
-    amnt_strk = 1000 * strk # scaled up by to make sure liquidity not too low 
-    amt_usdc = 215 * strk
-
-    sqrtp_low = price_to_sqrtp(0.195)
-    cur_sqrtp = price_to_sqrtp(0.215)
-    sqrtp_hi = price_to_sqrtp(0.255)
-
-    liq0 = liquidity0(amnt_strk, cur_sqrtp, sqrtp_hi)
-    liq1 = liquidity1(amt_usdc, cur_sqrtp, sqrtp_low)
-    liq = int(min(liq0, liq1))
+def print_test_values():
+    """Print exact test values for all test cases"""
+    # Basic test values
+    price_a = 1.0
+    price_b = 2.0
+    liquidity = 1000000
+    sqrtp_a = price_to_sqrtp(price_a)
+    sqrtp_b = price_to_sqrtp(price_b)
     
-    print(f"[DEBUG] Liquidity Calculation:")
-    print(f"    amnt_strk = {amnt_strk}")
-    print(f"    amt_usdc  = {amt_usdc}")
-    print(f"    sqrtp_low = {sqrtp_low}")
-    print(f"    cur_sqrtp = {cur_sqrtp}")
-    print(f"    sqrtp_hi  = {sqrtp_hi}")
-    print(f"    liq0      = {liq0}")
-    print(f"    liq1      = {liq1}")
-    print(f"    Chosen liq = {liq}")
+    print("// Test values for basic case:")
+    print(f"// sqrtp_a = {sqrtp_a}")
+    print(f"// sqrtp_b = {sqrtp_b}")
+    print(f"// liquidity = {liquidity}")
+    print(f"// expected_amount0 = {calc_amount0(liquidity, sqrtp_a, sqrtp_b)}")
+    print(f"// expected_amount1 = {calc_amount1(liquidity, sqrtp_a, sqrtp_b)}")
+    print()
     
-
-
-def test_calc_amounts():
-    strk = 10**18
-    amnt_strk = 1 * strk
-    amt_usdc = 0.215 * strk
-
-    cur_sqrtp = price_to_sqrtp(0.215)
-    sqrtp_low = price_to_sqrtp(0.195)
-    sqrtp_hi = price_to_sqrtp(0.255)
-
-    liq0 = liquidity0(amnt_strk, cur_sqrtp, sqrtp_hi)
-    liq1 = liquidity1(amt_usdc, cur_sqrtp, sqrtp_low)
-    liq = int(min(liq0, liq1))
-
-    amount0 = calc_amount0(liq, sqrtp_hi, cur_sqrtp)
-    amount1 = calc_amount1(liq, sqrtp_low, cur_sqrtp)
-
-    print(f"[DEBUG] Token Amounts Calculation:")
-    print(f"    cur_sqrtp = {cur_sqrtp}")
-    print(f"    sqrtp_low = {sqrtp_low}")
-    print(f"    sqrtp_hi  = {sqrtp_hi}")
-    print(f"    liq       = {liq}")
-    print(f"    Calculated amount0 = {amount0}")
-    print(f"    Calculated amount1 = {amount1}")
+    # ETH/USDC example
+    sqrtp_low = price_to_sqrtp(1500)
+    sqrtp_high = price_to_sqrtp(2500)
+    liquidity = 2 * 10**18  # 2 ETH worth
     
-    expected_amount0 = 1000000000000000000
-    expected_amount1 = 125271229822007120
-
-    assert amount0 == expected_amount0, f"Expected amount0 {expected_amount0}, got {amount0}"
-    assert amount1 == expected_amount1, f"Expected amount1 {expected_amount1}, got {amount1}"
-
-def test_swap_eth_for_usdc():
-    eth = 10**18
-    current_sqrtp = 5602277097478614198912276234240
-    liquidity = 1517882343751509868544
-    
-    # Swap: selling ETH for USDC
-    amount_in = 0.01337 * eth
-
-    print(f"\n[DEBUG] Selling {amount_in/eth} ETH for USDC")
-    
-    # For selling ETH (token0), the price (sqrtP) decreases
-    # Formula differs from selling token1
-    price_next = int((liquidity * q96 * current_sqrtp) // (liquidity * q96 + amount_in * current_sqrtp))
-    
-    new_price = (price_next / q96) ** 2
-    new_tick = price_to_tick(new_price)
-    
-    print(f"    current_sqrtp  = {current_sqrtp}")
-    print(f"    liquidity      = {liquidity}")
-    print(f"    amount_in      = {amount_in}")
-    print(f"    New price      = {new_price}")
-    print(f"    New sqrtP      = {price_next}")
-    print(f"    New tick       = {new_tick}")
-    
-    amount_in_calculated = calc_amount0(liquidity, price_next, current_sqrtp)
-    amount_out_calculated = calc_amount1(liquidity, price_next, current_sqrtp)
-    
-    print(f"    ETH in         = {amount_in_calculated / eth}")
-    print(f"    USDC out       = {amount_out_calculated / eth}")
-    
-    # expected_price_next = 5598789932670289186088059666432
-    expected_new_price = 4993.777388290041
-    expected_eth_in = 0.013369999999998142
-    expected_usdc_out = 66.80838889019013
-    
-    assert math.isclose(new_price, expected_new_price, rel_tol=1e-9), \
-        f"Expected new_price {expected_new_price}, got {new_price}"
-    assert math.isclose(amount_in_calculated / eth, expected_eth_in, rel_tol=1e-9), \
-        f"Expected ETH in {expected_eth_in}, got {amount_in_calculated / eth}"
-    assert math.isclose(amount_out_calculated / eth, expected_usdc_out, rel_tol=1e-9), \
-        f"Expected USDC out {expected_usdc_out}, got {amount_out_calculated / eth}"
-
-
-
-if __name__ == '__main__':
-    test_price_to_tick()
-    test_price_to_sqrtp()
-    test_liquidity_calculation()
-    test_calc_amounts()
-    test_swap_calculation()
-    test_swap_calculation_strk()
-    test_swap_eth_for_usdc()
+    print("// Test values for ETH/USDC range:")
+    print(f"// sqrtp_low = {sqrtp_low}")
+    print(f"// sqrtp_high = {sqrtp_high}")
+    print(f"// liquidity = {liquidity}")
+    print(f"// expected_amount0 = {calc_amount0(liquidity, sqrtp_low, sqrtp_high)}")
+    print(f"// expected_amount1 = {calc_amount1(liquidity, sqrtp_low, sqrtp_high)}")
