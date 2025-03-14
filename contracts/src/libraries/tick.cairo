@@ -20,6 +20,13 @@ pub mod Tick {
     enum Event {}
 
     pub impl ITickImpl of ITickTrait<ContractState> {
+        fn cross(ref self: ContractState, tick: i32) -> i128 {
+            let mut info = self.ticks.read(tick.into());
+
+            info.inited = !info.inited;
+
+            info.liq_net
+        }
         fn update(ref self: ContractState, tick: i32, liq_delta: i128, upper: bool) -> bool {
             let mut info = self.ticks.read(tick.into());
 

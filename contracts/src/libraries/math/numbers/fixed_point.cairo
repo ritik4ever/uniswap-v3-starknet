@@ -7,11 +7,11 @@ pub struct FixedQ64x96 {
 /// The minimum value that can be returned from #getSqrtRatioAtTick. Equivalent to
 /// getSqrtRatioAtTick(MIN_TICK) [uniswap
 /// v3-core](https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/TickMath.sol)
-const MIN_SQRT_RATIO: u256 = 4295128739;
+pub const MIN_SQRT_RATIO: u256 = 4295128739;
 /// The maximum value that can be returned from #getSqrtRatioAtTick. Equivalent to
 /// getSqrtRatioAtTick(MAX_TICK) [uniswap
 /// v3-core](https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/TickMath.sol)
-const MAX_SQRT_RATIO: u256 = 1461446703485210103287273052203988822378723970342;
+pub const MAX_SQRT_RATIO: u256 = 1461446703485210103287273052203988822378723970342;
 
 /// Fixed point constants
 pub const ONE: u256 = 79228162514264337593543950336; // 2^96

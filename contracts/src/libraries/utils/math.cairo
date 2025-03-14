@@ -1,5 +1,13 @@
 use alexandria_math::fast_power::fast_power;
 
+pub fn abs_i128(value: i128) -> u128 {
+    if value < 0 {
+        (-value).try_into().unwrap()
+    } else {
+        value.try_into().unwrap()
+    }
+}
+
 pub fn scale_amount(amount: i128, decimals: u8) -> u256 {
     let is_negative = amount < 0;
     let abs_amount: u128 = if is_negative {

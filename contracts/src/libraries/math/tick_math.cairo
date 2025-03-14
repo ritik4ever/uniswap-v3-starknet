@@ -124,7 +124,7 @@ pub mod TickMath {
     /// Calculates the greatest tick value such that `get_sqrt_ratio_at_tick(tick) <= sqrt_ratio`
     /// @param sqrt_ratio_x96 The sqrt ratio for which to compute the tick as a Q64.96
     /// @return The greatest tick for which the ratio is less than or equal to the input ratio
-    fn get_tick_at_sqrt_ratio(sqrt_ratio_x96: FixedQ64x96) -> i32 {
+    pub fn get_tick_at_sqrt_ratio(sqrt_ratio_x96: FixedQ64x96) -> i32 {
         // Validate price is within bounds
         assert(sqrt_ratio_x96.value >= MIN_SQRT_RATIO, 'sqrt price too low');
         assert(sqrt_ratio_x96.value < MAX_SQRT_RATIO, 'sqrt price too high');

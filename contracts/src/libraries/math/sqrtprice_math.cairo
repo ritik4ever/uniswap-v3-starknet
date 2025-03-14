@@ -1,4 +1,4 @@
-mod SqrtPriceMath {
+pub mod SqrtPriceMath {
     use alexandria_math::const_pow::pow2_u256;
     use contracts::libraries::math::fullmath::full_math::{
         div_rounding_up, mul_div, mul_div_rounding_up,
@@ -93,7 +93,7 @@ mod SqrtPriceMath {
     /// [`zero_for_one`]: Whether the amount in is token0 or token1
     ///
     /// @return The price after adding the input amount to token0 or token1
-    fn get_next_sqrt_price_from_input(
+    pub fn get_next_sqrt_price_from_input(
         sqrt_pricex96: FixedQ64x96, liquidity: u128, amount_in: u256, zero_for_one: bool,
     ) -> FixedQ64x96 {
         assert(sqrt_pricex96.value > 0, 'invalid sqrtPrice');

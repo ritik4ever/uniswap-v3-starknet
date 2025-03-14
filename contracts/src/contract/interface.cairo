@@ -1,3 +1,4 @@
+use contracts::libraries::math::numbers::fixed_point::FixedQ64x96;
 use contracts::libraries::position::{Info, Key};
 use starknet::ContractAddress;
 
@@ -16,6 +17,9 @@ pub trait UniswapV3PoolTrait<TContractState> {
         ref self: TContractState,
         recipient: ContractAddress,
         callback_address: ContractAddress,
+        zero_for_one: bool,
+        amount_specified: i128,
+        sqrt_price_limit_x96: FixedQ64x96,
         data: Array<felt252>,
     ) -> (i128, i128);
 }
@@ -45,6 +49,7 @@ pub trait IUniswapV3Manager<TContractState> {
 
 #[starknet::interface]
 pub trait ITickTrait<TContractState> {
+    fn cross(ref self: TContractState, tick: i32) -> i128;
     fn update(ref self: TContractState, tick: i32, liq_delta: i128, upper: bool) -> bool;
     fn is_init(self: @TContractState, tick: i32) -> bool;
 }
