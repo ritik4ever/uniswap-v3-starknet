@@ -5,6 +5,7 @@ pub mod SqrtPriceMath {
     };
     use contracts::libraries::math::numbers::fixed_point::{FixedQ64x96, IFixedQ64x96Impl};
 
+    const MAX_u256: u256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
     const MAX_u128: u128 = 340_282_366_920_938_463_463_374_607_431_768_211_455;
     /// Returns the next square root price given a token0 delta
     ///
@@ -17,32 +18,37 @@ pub mod SqrtPriceMath {
     ///  [`add`] Whether to add or remove the amount of token0
     ///
     /// @return The price after adding or removing amount, depending on add
-    fn get_next_sqrt_price_from_amount0_rounding_up(
+    pub fn get_next_sqrt_price_from_amount0_rounding_up(
         sqrt_pricex96: FixedQ64x96, liquidity: u128, amount: u256, add: bool,
     ) -> FixedQ64x96 {
         if amount == 0 {
             return sqrt_pricex96;
         }
+        
         let sqrt_price_value = sqrt_pricex96.value;
         let u256_liq = u256 { low: liquidity, high: 0 };
         let numerator = u256_liq * pow2_u256(96);
-        let product = amount * sqrt_price_value;
-
+        
         if add {
             // if adding token0, price decreases
-            let denominator = numerator + product;
-            if denominator >= numerator {
+            // Use alternative formula to avoid overflow when amount or sqrt_price is large
+            if amount > 0xffffffffffffffff_u256 || sqrt_price_value > 0xffffffffffffffff_u256 {
+                // Use the division-based formula which is less likely to overflow
+                return IFixedQ64x96Impl::new(
+                    div_rounding_up(numerator, (numerator / sqrt_price_value) + amount),
+                );
+            } else {
+                // Safe for smaller values - direct multiplication
+                let product = amount * sqrt_price_value;
+                let denominator = numerator + product;
                 return IFixedQ64x96Impl::new(
                     mul_div_rounding_up(numerator, sqrt_price_value, denominator),
                 );
             }
-
-            // less precise version if we cannot compute using the precise formula
-            return IFixedQ64x96Impl::new(
-                div_rounding_up(numerator, (numerator / sqrt_price_value) + amount),
-            );
         } else {
             // if removing token0, price increases
+            // For removal, use mul_div which handles overflow better
+            let product = mul_div(amount, sqrt_price_value, 1);  // Calculate safely
             assert(product <= numerator, 'liquidity underflow');
             let denominator = numerator - product;
             return IFixedQ64x96Impl::new(
@@ -50,8 +56,9 @@ pub mod SqrtPriceMath {
             );
         }
     }
+    
 
-    fn get_next_sqrt_price_from_amount1_rounding_down(
+    pub fn get_next_sqrt_price_from_amount1_rounding_down(
         sqrt_pricex96: FixedQ64x96, liquidity: u128, amount: u256, add: bool,
     ) -> FixedQ64x96 {
         if amount == 0 {
@@ -121,7 +128,7 @@ pub mod SqrtPriceMath {
     /// [`zero_for_one`]: Whether the amount out is token0 or token1
     ///
     /// @return The price after removing the output amount of token0 or token1
-    fn get_next_sqrt_price_from_output(
+    pub fn get_next_sqrt_price_from_output(
         sqrt_pricex96: FixedQ64x96, liquidity: u128, amount_out: u256, zero_for_one: bool,
     ) -> FixedQ64x96 {
         assert(sqrt_pricex96.value > 0, 'invalid sqrtPrice');

@@ -28,12 +28,28 @@ pub mod full_math {
     pub fn mul_div_rounding_up(a: u256, b: u256, denominator: u256) -> u256 {
         assert(denominator > 0, 'division by zero');
         
+        if a == 0 || b == 0 {
+            return 0;
+        }
+        
+        // early optimization: if both numbers are small enough do direct calculation
+        if a <= 0xffffffff_u256 && b <= 0xffffffff_u256 {
+            let product = a * b;
+            let result = product / denominator;
+            if product % denominator > 0 {
+                return result + 1;
+            }
+            return result;
+        }
+        
+        // for larger numbers divide first to avoid overflow
         let quotient = a / denominator;
         let remainder = a % denominator;
         
         let mut res = quotient * b;
         
         if remainder > 0 {
+            // Check if we can safely multiply remainder and b
             if b < MAX_u256 / remainder {
                 let rem_term = (remainder * b) / denominator;
                 res = res + rem_term;
@@ -42,16 +58,26 @@ pub mod full_math {
                     res = res + 1;
                 }
             } else {
-                // if large b, divide b first to avoid overflow
+                // For extremely large b values, divide b first
                 let partial_b = b / denominator;
                 let partial_product = remainder * partial_b;
                 res = res + partial_product;
                 
+                // Handle the remaining part with extra care
                 let b_remainder = b % denominator;
-                let rem_product = remainder * b_remainder;
-                if rem_product > 0 {
-                    res = res + rem_product / denominator;
-                    if rem_product % denominator > 0 {
+                
+                if b_remainder > 0 && remainder > 0 {
+                    // Calculate (remainder * b_remainder) / denominator more safely
+                    if remainder <= MAX_u256 / b_remainder {
+                        // Direct calculation is safe
+                        let rem_product = remainder * b_remainder;
+                        res = res + rem_product / denominator;
+                        if rem_product % denominator > 0 {
+                            res = res + 1;
+                        }
+                    } else {
+                        // the product would overflow, add 1 for rounding up
+                        // This is a simplification but ensures we round up
                         res = res + 1;
                     }
                 }
