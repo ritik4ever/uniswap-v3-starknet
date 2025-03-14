@@ -15,7 +15,7 @@ pub mod TickMath {
     const MAX_SQRT_RATIO: u256 = 1461446703485210103287273052203988822378723970342;
 
     /// Calculates sqrt(1.0001^tick) * 2^96
-    /// @param tick The tick for which to compute the sqrt ratio
+    /// @param [`tick`] The tick for which to compute the sqrt ratio
     /// @return The sqrt ratio as a Q64.96 fixed point number
     pub fn get_sqrt_ratio_at_tick(tick: i32) -> FixedQ64x96 {
         // Validate tick is within bounds
@@ -175,12 +175,15 @@ pub mod TickMath {
         }
 
         // Create log_2 as i257 with appropriate sign
-        let msb_minus_128 = msb - 128;
+
+        let msb_minus_128: i32 = msb.try_into().expect('msb') - 128;
+
+
         let is_negative = msb_minus_128 < 0;
-        let abs_value = if is_negative {
-            128 - msb
+        let abs_value: u32 = if is_negative {
+            128 - msb.into()
         } else {
-            msb_minus_128
+            msb_minus_128.try_into().expect('msb minus')
         };
         let abs_u256 = u256 { low: abs_value.into(), high: 0 } * pow2_u256(64);
         let mut log_2 = I257Impl::new(abs_u256, is_negative);
@@ -226,17 +229,20 @@ pub mod TickMath {
         let tick_low_abs = tick_low_i257.abs() / pow2_u256(128);
         let tick_high_abs = tick_high_i257.abs() / pow2_u256(128);
 
-        let tick_low = if tick_low_i257.is_negative() {
-            let tick_low_u32: u32 = tick_low_abs.try_into().unwrap();
-            -1 * (tick_low_u32.try_into().unwrap())
+        let tick_low: i32 = if tick_low_i257.is_negative() {
+            // First convert to u32, which has a TryInto implementation
+            let abs_u32: u32 = tick_low_abs.try_into().unwrap();
+            // Then convert u32 to i32 and negate
+            -(abs_u32.try_into().unwrap())
         } else {
-            let tick_low_u32: u32 = tick_low_abs.try_into().unwrap();
-            tick_low_u32.try_into().unwrap()
+            // Same two-step conversion for the positive case
+            let abs_u32: u32 = tick_low_abs.try_into().unwrap();
+            abs_u32.try_into().unwrap()
         };
-
+        
         let tick_high = if tick_high_i257.is_negative() {
             let tick_high_u32: u32 = tick_high_abs.try_into().unwrap();
-            -1 * tick_high_u32.try_into().unwrap()
+            -(tick_high_u32.try_into().unwrap())
         } else {
             let tick_high_u32: u32 = tick_high_abs.try_into().unwrap();
             tick_high_u32.try_into().unwrap()
