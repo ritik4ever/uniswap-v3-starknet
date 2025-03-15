@@ -20,13 +20,15 @@ This project aims to implement Uniswap V3's concentrated liquidity AMM on Starkn
 - Additional auditing and testing infrastructure must be developed specifically for this Cairo implementation
 
 ## Development Roadmap
-1. **Core Pool Implementation** (Implemented with hardcoded values for now)
+1. **Core Pool Implementation** (Implemented, needs testing)
    - Basic swap functionality
    - Single-tick liquidity provision
    - Callback pattern implementation
 
+* Basic Frontend <- yet to be implemented
+
 2. **Tick Bitmap & Cross-Tick Swaps** (Upcoming)
-   - Efficient tick tracking system
+   - Efficient tick tracking system <- implemented
    - Cross-tick swap routing
    - Fee management
 
