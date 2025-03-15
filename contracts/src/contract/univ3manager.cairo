@@ -81,11 +81,11 @@ mod UniswapV3Manager {
             upper_tick: i32,
             amount: u128,
             data: Array<felt252>,
-        ) {
+        ) -> (u256, u256) {
             let pool_address = self.pool_address.read();
             let mut pool = UniswapV3PoolTraitDispatcher { contract_address: pool_address };
 
-            pool.mint(lower_tick, upper_tick, amount, data);
+            pool.mint(lower_tick, upper_tick, amount, data)
         }
     }
 }

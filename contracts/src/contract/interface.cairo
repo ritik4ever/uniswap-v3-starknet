@@ -44,7 +44,7 @@ pub trait IUniswapV3Manager<TContractState> {
         upper_tick: i32,
         amount: u128,
         data: Array<felt252>,
-    );
+    ) -> (u256, u256);
 }
 
 #[starknet::interface]
