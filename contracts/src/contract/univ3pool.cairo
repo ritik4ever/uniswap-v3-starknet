@@ -164,8 +164,10 @@ pub mod UniswapV3Pool {
 
             position_state.update(key, amount);
             let new_liq = position_state.get(key).liq;
-            self.liquidity.write(new_liq.into());
 
+            if current_tick >= lower_tick && current_tick < upper_tick {
+                self.liquidity.write(new_liq.into());
+            }
             let amount0_u128: u128 = amount0.try_into().unwrap_or(0);
             let amount1_u128: u128 = amount1.try_into().unwrap_or(0);
 
