@@ -1,6 +1,8 @@
 #[cfg(test)]
-mod test_contract {
-    mod test_contract;
+mod contract_tests {
+    mod pool_contract_tests {
+        mod mint_tests;
+    }
     mod utils;
 }
 
