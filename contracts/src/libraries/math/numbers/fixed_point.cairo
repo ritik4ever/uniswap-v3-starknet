@@ -102,20 +102,19 @@ pub impl IFixedQ64x96Impl of IFixedQ64x96Trait {
         if self.value == 0 {
             return FixedQ64x96 { value: 0 };
         }
-        
+
         let root: u256 = u256_sqrt(self.value).into();
         let scale_root: u256 = u256_sqrt(ONE).into();
-        
+
         let result: u256 = root * ONE / scale_root;
-        
+
         // handle the case where result would be below MIN_SQRT_RATIO
         if result < MIN_SQRT_RATIO && result > 0 {
             return FixedQ64x96 { value: MIN_SQRT_RATIO };
         }
-        
+
         FixedQ64x96 { value: result }
     }
-    
 }
 
 impl FP64x96Into of Into<FixedQ64x96, felt252> {

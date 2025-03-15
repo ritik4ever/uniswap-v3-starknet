@@ -178,7 +178,6 @@ pub mod TickMath {
 
         let msb_minus_128: i32 = msb.try_into().expect('msb') - 128;
 
-
         let is_negative = msb_minus_128 < 0;
         let abs_value: u32 = if is_negative {
             128 - msb.into()
@@ -239,7 +238,7 @@ pub mod TickMath {
             let abs_u32: u32 = tick_low_abs.try_into().unwrap();
             abs_u32.try_into().unwrap()
         };
-        
+
         let tick_high = if tick_high_i257.is_negative() {
             let tick_high_u32: u32 = tick_high_abs.try_into().unwrap();
             -(tick_high_u32.try_into().unwrap())

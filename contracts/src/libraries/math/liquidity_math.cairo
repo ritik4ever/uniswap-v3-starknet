@@ -15,36 +15,29 @@ pub mod LiquidityMath {
         } else {
             (sqrt_price_a_x96.value, sqrt_price_b_x96.value)
         };
-    
+
         let u256_liquidity = u256 { low: liquidity, high: 0 };
-    
+
         mul_div_rounding_up(u256_liquidity, max_sqrt_price - min_sqrt_price, ONE)
-    }    
+    }
 
     pub fn calc_amount0_delta(
-        sqrt_price_a_x96: FixedQ64x96, 
-        sqrt_price_b_x96: FixedQ64x96, 
-        liquidity: u128,
+        sqrt_price_a_x96: FixedQ64x96, sqrt_price_b_x96: FixedQ64x96, liquidity: u128,
     ) -> u256 {
         let (lower_price, upper_price) = if sqrt_price_a_x96.value <= sqrt_price_b_x96.value {
             (sqrt_price_a_x96, sqrt_price_b_x96)
         } else {
             (sqrt_price_b_x96, sqrt_price_a_x96)
         };
-    
+
         let price_diff_div = mul_div_rounding_up(
-            upper_price.value - lower_price.value,
-            ONE,
-            upper_price.value
+            upper_price.value - lower_price.value, ONE, upper_price.value,
         );
-        
+
         let result = mul_div_rounding_up(
-            u256 { low: liquidity, high: 0 },
-            price_diff_div,
-            lower_price.value
+            u256 { low: liquidity, high: 0 }, price_diff_div, lower_price.value,
         );
-        
+
         result
     }
-    
 }

@@ -5,7 +5,8 @@ pub mod SqrtPriceMath {
     };
     use contracts::libraries::math::numbers::fixed_point::{FixedQ64x96, IFixedQ64x96Impl};
 
-    const MAX_u256: u256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
+    const MAX_u256: u256 =
+        115792089237316195423570985008687907853269984665640564039457584007913129639935;
     const MAX_u128: u128 = 340_282_366_920_938_463_463_374_607_431_768_211_455;
     /// Returns the next square root price given a token0 delta
     ///
@@ -24,11 +25,11 @@ pub mod SqrtPriceMath {
         if amount == 0 {
             return sqrt_pricex96;
         }
-        
+
         let sqrt_price_value = sqrt_pricex96.value;
         let u256_liq = u256 { low: liquidity, high: 0 };
         let numerator = u256_liq * pow2_u256(96);
-        
+
         if add {
             // if adding token0, price decreases
             // Use alternative formula to avoid overflow when amount or sqrt_price is large
@@ -48,7 +49,7 @@ pub mod SqrtPriceMath {
         } else {
             // if removing token0, price increases
             // For removal, use mul_div which handles overflow better
-            let product = mul_div(amount, sqrt_price_value, 1);  // Calculate safely
+            let product = mul_div(amount, sqrt_price_value, 1); // Calculate safely
             assert(product <= numerator, 'liquidity underflow');
             let denominator = numerator - product;
             return IFixedQ64x96Impl::new(
@@ -56,7 +57,7 @@ pub mod SqrtPriceMath {
             );
         }
     }
-    
+
 
     pub fn get_next_sqrt_price_from_amount1_rounding_down(
         sqrt_pricex96: FixedQ64x96, liquidity: u128, amount: u256, add: bool,
@@ -132,25 +133,23 @@ pub mod SqrtPriceMath {
         sqrt_pricex96: FixedQ64x96, liquidity: u128, amount_out: u256, zero_for_one: bool,
     ) -> FixedQ64x96 {
         assert(amount_out > 0, 'amount_out must be positive');
-        
+
         let sqrt_price_value = sqrt_pricex96.value;
         let u256_liq = u256 { low: liquidity, high: 0 };
-        
+
         if zero_for_one {
             // If removing token1, price decreases
             let product = mul_div(amount_out, pow2_u256(96), u256_liq);
             assert(product <= sqrt_price_value, 'price below minimum');
             return IFixedQ64x96Impl::new(sqrt_price_value - product);
         } else {
-            
             let amount_scaled = div_rounding_up(amount_out * sqrt_price_value, pow2_u256(96));
-            
+
             assert(amount_scaled < u256_liq, 'insufficient liquidity');
-            
+
             return IFixedQ64x96Impl::new(
-                div_rounding_up(sqrt_price_value * u256_liq, u256_liq - amount_scaled)
+                div_rounding_up(sqrt_price_value * u256_liq, u256_liq - amount_scaled),
             );
         }
     }
-    
 }

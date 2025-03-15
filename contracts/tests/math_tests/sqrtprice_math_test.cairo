@@ -1,5 +1,5 @@
-use contracts::libraries::math::sqrtprice_math::SqrtPriceMath;
 use contracts::libraries::math::numbers::fixed_point::{FixedQ64x96, IFixedQ64x96Impl};
+use contracts::libraries::math::sqrtprice_math::SqrtPriceMath;
 
 
 // --- Cairo Test Code for get_next_sqrt_price_from_amount0_rounding_up --- //
@@ -12,13 +12,15 @@ fn test_get_next_sqrt_price_from_amount0_zero_amount() {
     let add = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount0_rounding_up(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 79228162514264337593543950336_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -30,13 +32,15 @@ fn test_get_next_sqrt_price_from_amount0_adding_token0() {
     let add = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount0_rounding_up(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 7922024049021531606193775_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -48,13 +52,15 @@ fn test_get_next_sqrt_price_from_amount0_removing_token0() {
     let add = false;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount0_rounding_up(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 396140812571321687967719751680_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -66,13 +72,15 @@ fn test_get_next_sqrt_price_from_amount0_real_example() {
     let add = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount0_rounding_up(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 633825139767628305526620771_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 // --- Cairo Test Code for get_next_sqrt_price_from_amount1_rounding_down --- //
@@ -85,13 +93,15 @@ fn test_get_next_sqrt_price_from_amount1_zero_amount() {
     let add = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount1_rounding_down(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 79228162514264337593543950336_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -103,13 +113,15 @@ fn test_get_next_sqrt_price_from_amount1_adding_token1() {
     let add = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount1_rounding_down(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 792360853305157640273033047310336_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -121,13 +133,15 @@ fn test_get_next_sqrt_price_from_amount1_removing_token1() {
     let add = false;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount1_rounding_down(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 15845632502860790334960216501_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -139,13 +153,15 @@ fn test_get_next_sqrt_price_from_amount1_real_example() {
     let add = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_amount1_rounding_down(
-        sqrt_price_x96.clone(), liquidity, amount, add
+        sqrt_price_x96.clone(), liquidity, amount, add,
     );
 
     let expected = 2505414483770286352492704099597171_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 // --- Cairo Test Code for get_next_sqrt_price_from_input --- //
@@ -158,13 +174,15 @@ fn test_get_next_sqrt_price_from_input_token0() {
     let zero_for_one = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_input(
-        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one,
     );
 
     let expected = 7922024049021531606193775_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -176,13 +194,15 @@ fn test_get_next_sqrt_price_from_input_token1() {
     let zero_for_one = false;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_input(
-        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one,
     );
 
     let expected = 792360853305157640273033047310336_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -194,13 +214,15 @@ fn test_get_next_sqrt_price_from_input_eth_to_usdc() {
     let zero_for_one = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_input(
-        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one,
     );
 
     let expected = 1267649958842446079763463034_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -212,13 +234,15 @@ fn test_get_next_sqrt_price_from_input_usdc_to_eth() {
     let zero_for_one = false;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_input(
-        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_in, zero_for_one,
     );
 
     let expected = 2505414483760382832178421057397978_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 // --- Cairo Test Code for get_next_sqrt_price_from_output --- //
@@ -231,13 +255,15 @@ fn test_get_next_sqrt_price_from_output_token1_out() {
     let zero_for_one = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_output(
-        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one,
     );
 
     let expected = 71305346262845826650440981737_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -249,17 +275,20 @@ fn test_get_next_sqrt_price_from_output_token0_out() {
     let zero_for_one = false;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_output(
-        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one,
     );
 
     let expected = 88031291682515930659493278151_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 
-// <!IMPORTANT!> TODO: Make this test pass by fixing the overflow handling! in the libraries/math/fullmath.cairo
+// <!IMPORTANT!> TODO: Make this test pass by fixing the overflow handling! in the
+// libraries/math/fullmath.cairo
 #[test]
 fn test_get_next_sqrt_price_from_output_exact_eth_out() {
     // Test price calculation for token0 output
@@ -269,13 +298,15 @@ fn test_get_next_sqrt_price_from_output_exact_eth_out() {
     let zero_for_one = false;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_output(
-        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one,
     );
 
     let expected = 2783793870829622859151062823560918_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }
 
 #[test]
@@ -287,11 +318,13 @@ fn test_get_next_sqrt_price_from_output_exact_usdc_out() {
     let zero_for_one = true;
 
     let result = SqrtPriceMath::get_next_sqrt_price_from_output(
-        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one
+        sqrt_price_x96.clone(), liquidity, amount_out, zero_for_one,
     );
 
     let expected = 2505414483745527551706996494099190_u256;
     let tolerance = expected / 10000_u256; // 0.01% tolerance
-    assert(result.value >= expected - tolerance && result.value <= expected + tolerance, 
-        'Price calculation incorrect');
+    assert(
+        result.value >= expected - tolerance && result.value <= expected + tolerance,
+        'Price calculation incorrect',
+    );
 }

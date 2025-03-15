@@ -1,5 +1,5 @@
-use contracts::libraries::math::tick_math::TickMath;
 use contracts::libraries::math::numbers::fixed_point::{FixedQ64x96, IFixedQ64x96Impl};
+use contracts::libraries::math::tick_math::TickMath;
 
 
 // --- Cairo Test Code for get_sqrt_ratio_at_tick --- //
@@ -96,7 +96,10 @@ fn test_get_tick_at_sqrt_ratio_min_sqrt_ratio() {
 
 #[test]
 fn test_get_tick_at_sqrt_ratio_near_max_sqrt_ratio() {
-    let sqrt_ratio_x96 = FixedQ64x96 { value: 1461446703485210103287273052203988822378723970341_u256 - 6895660000000000000000000000000000000000000 };
+    let sqrt_ratio_x96 = FixedQ64x96 {
+        value: 1461446703485210103287273052203988822378723970341_u256
+            - 6895660000000000000000000000000000000000000,
+    };
     let result = TickMath::get_tick_at_sqrt_ratio(sqrt_ratio_x96);
 
     let expected = 887272_i32 - 1;

@@ -1,5 +1,6 @@
 pub mod full_math {
-    const MAX_u256: u256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
+    const MAX_u256: u256 =
+        115792089237316195423570985008687907853269984665640564039457584007913129639935;
     /// Calculates floor(a×b÷denominator) with full precision.
     /// The result will be rounded down.
     ///
@@ -27,11 +28,11 @@ pub mod full_math {
     /// @return result The result of a*b/denominator, rounded up
     pub fn mul_div_rounding_up(a: u256, b: u256, denominator: u256) -> u256 {
         assert(denominator > 0, 'division by zero');
-        
+
         if a == 0 || b == 0 {
             return 0;
         }
-        
+
         // early optimization: if both numbers are small enough do direct calculation
         if a <= 0xffffffff_u256 && b <= 0xffffffff_u256 {
             let product = a * b;
@@ -41,19 +42,19 @@ pub mod full_math {
             }
             return result;
         }
-        
+
         // for larger numbers divide first to avoid overflow
         let quotient = a / denominator;
         let remainder = a % denominator;
-        
+
         let mut res = quotient * b;
-        
+
         if remainder > 0 {
             // Check if we can safely multiply remainder and b
             if b < MAX_u256 / remainder {
                 let rem_term = (remainder * b) / denominator;
                 res = res + rem_term;
-                
+
                 if (remainder * b) % denominator > 0 {
                     res = res + 1;
                 }
@@ -62,10 +63,10 @@ pub mod full_math {
                 let partial_b = b / denominator;
                 let partial_product = remainder * partial_b;
                 res = res + partial_product;
-                
+
                 // Handle the remaining part with extra care
                 let b_remainder = b % denominator;
-                
+
                 if b_remainder > 0 && remainder > 0 {
                     // Calculate (remainder * b_remainder) / denominator more safely
                     if remainder <= MAX_u256 / b_remainder {
@@ -83,10 +84,10 @@ pub mod full_math {
                 }
             }
         }
-        
+
         return res;
     }
-    
+
 
     /// Calculates ceil(numerator÷denominator) with full precision.
     /// The result will be rounded up.
