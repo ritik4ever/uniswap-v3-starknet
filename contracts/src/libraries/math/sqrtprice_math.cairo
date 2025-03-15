@@ -131,21 +131,26 @@ pub mod SqrtPriceMath {
     pub fn get_next_sqrt_price_from_output(
         sqrt_pricex96: FixedQ64x96, liquidity: u128, amount_out: u256, zero_for_one: bool,
     ) -> FixedQ64x96 {
-        assert(sqrt_pricex96.value > 0, 'invalid sqrtPrice');
-        assert(liquidity > 0, 'invalid liquidity');
-        assert(amount_out > 0, 'amount out must be > 0');
-
-        // The routing here is inverted compared to the input function
-        // If zero_for_one is true, we're swapping token0 for token1, so we're removing token1
-        // Otherwise, we're swapping token1 for token0, so we're removing token0
+        assert(amount_out > 0, 'amount_out must be positive');
+        
+        let sqrt_price_value = sqrt_pricex96.value;
+        let u256_liq = u256 { low: liquidity, high: 0 };
+        
         if zero_for_one {
-            get_next_sqrt_price_from_amount1_rounding_down(
-                sqrt_pricex96, liquidity, amount_out, false,
-            )
+            // If removing token1, price decreases
+            let product = mul_div(amount_out, pow2_u256(96), u256_liq);
+            assert(product <= sqrt_price_value, 'price below minimum');
+            return IFixedQ64x96Impl::new(sqrt_price_value - product);
         } else {
-            get_next_sqrt_price_from_amount0_rounding_up(
-                sqrt_pricex96, liquidity, amount_out, false,
-            )
+            
+            let amount_scaled = div_rounding_up(amount_out * sqrt_price_value, pow2_u256(96));
+            
+            assert(amount_scaled < u256_liq, 'insufficient liquidity');
+            
+            return IFixedQ64x96Impl::new(
+                div_rounding_up(sqrt_price_value * u256_liq, u256_liq - amount_scaled)
+            );
         }
     }
+    
 }
