@@ -19,6 +19,7 @@ pub mod Tick {
     #[derive(Drop, starknet::Event)]
     enum Event {}
 
+    #[abi(embed_v0)]
     pub impl ITickImpl of ITickTrait<ContractState> {
         fn cross(ref self: ContractState, tick: i32) -> i128 {
             let mut info = self.ticks.read(tick.into());
