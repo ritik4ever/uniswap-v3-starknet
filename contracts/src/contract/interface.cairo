@@ -1,3 +1,4 @@
+use contracts::contract::univ3pool::Slot0;
 use contracts::libraries::math::numbers::fixed_point::FixedQ64x96;
 use contracts::libraries::position::{Info, Key};
 use starknet::ContractAddress;
@@ -13,6 +14,7 @@ pub trait UniswapV3PoolTrait<TContractState> {
     ) -> (u256, u256);
     fn get_liquidity(self: @TContractState) -> u256;
     fn is_tick_init(self: @TContractState, tick: i32) -> bool;
+    fn slot0(self: @TContractState) -> Slot0;
     fn swap(
         ref self: TContractState,
         recipient: ContractAddress,

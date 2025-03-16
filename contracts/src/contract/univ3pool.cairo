@@ -1,7 +1,7 @@
 #[derive(Copy, Drop, Serde, starknet::Store)]
-struct Slot0 {
-    sqrt_pricex96: u256,
-    tick: i32,
+pub struct Slot0 {
+    pub sqrt_pricex96: u256,
+    pub tick: i32,
 }
 #[starknet::contract]
 pub mod UniswapV3Pool {
@@ -401,6 +401,10 @@ pub mod UniswapV3Pool {
 
         fn is_tick_init(self: @ContractState, tick: i32) -> bool {
             Tick::unsafe_new_contract_state().is_init(tick)
+        }
+
+        fn slot0(self: @ContractState) -> Slot0 {
+            self.slot0.read()
         }
     }
 
