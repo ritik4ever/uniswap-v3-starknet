@@ -14,6 +14,7 @@ pub mod TickBitmap {
     #[derive(Drop, starknet::Event)]
     enum Event {}
 
+    #[abi(embed_v0)]
     impl IUniswapV3TickBitmapImpl of IUniswapV3TickBitmap<ContractState> {
         fn flip_tick(ref self: ContractState, tick: i32, tick_spacing: i32) {
             assert(tick % tick_spacing == 0, 'undivisible by tick_spacing');
