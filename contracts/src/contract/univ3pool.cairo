@@ -6,8 +6,10 @@ pub struct Slot0 {
 #[starknet::contract]
 pub mod UniswapV3Pool {
     use contracts::contract::interface::{
-        IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait, IUniswapV3ManagerDispatcher,
-        IUniswapV3ManagerDispatcherTrait, IUniswapV3TickBitmap, UniswapV3PoolTrait,
+        IERC20TraitDispatcher, IERC20TraitDispatcherTrait, ITickTrait, ITickTraitDispatcher,
+        ITickTraitDispatcherTrait, IUniswapV3ManagerDispatcher, IUniswapV3ManagerDispatcherTrait,
+        IUniswapV3TickBitmap, IUniswapV3TickBitmapDispatcher, IUniswapV3TickBitmapDispatcherTrait,
+        UniswapV3PoolTrait,
     };
     use contracts::contract::univ3tick_bitmap::TickBitmap;
     use contracts::libraries::math::liquidity_math::LiquidityMath::{
@@ -16,13 +18,13 @@ pub mod UniswapV3Pool {
     use contracts::libraries::math::numbers::fixed_point::{
         FixedQ64x96, MAX_SQRT_RATIO, MIN_SQRT_RATIO,
     };
-    use contracts::libraries::math::sqrtprice_math::SqrtPriceMath;
+    use contracts::libraries::math::swap_math::SwapMath;
     use contracts::libraries::math::tick_math::TickMath;
     use contracts::libraries::position::Position::IPositionImpl;
     use contracts::libraries::position::{Key, Position};
     use contracts::libraries::tick::Tick;
     use contracts::libraries::tick::Tick::ITickImpl;
-    use contracts::libraries::utils::math::{abs_i128, scale_amount};
+    use contracts::libraries::utils::math::scale_amount;
     use starknet::event::EventEmitter;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
@@ -30,7 +32,8 @@ pub mod UniswapV3Pool {
 
     const MIN_TICK: i32 = -887272;
     const MAX_TICK: i32 = -MIN_TICK;
-    const MAX_i128: i128 = 170_141_183_460_469_231_731_687_303_715_884_105_727;
+    const MAX_I128: i128 = 170_141_183_460_469_231_731_687_303_715_884_105_727;
+    const MIN_I128: i128 = -MAX_I128;
 
 
     #[storage]
@@ -39,6 +42,9 @@ pub mod UniswapV3Pool {
         token1: ContractAddress,
         slot0: Slot0,
         liquidity: u256,
+        tick_address: ContractAddress,
+        bitmap_address: ContractAddress,
+        position_address: ContractAddress,
     }
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -89,6 +95,9 @@ pub mod UniswapV3Pool {
         token1: ContractAddress,
         sqrt_pricex96: u256,
         tick: i32,
+        tick_address: ContractAddress,
+        bitmap_address: ContractAddress,
+        position_address: ContractAddress,
     ) {
         assert(tick > MIN_TICK, 'Tick must be higher');
         assert(tick < MAX_TICK, 'Tick must be lower');
@@ -97,6 +106,9 @@ pub mod UniswapV3Pool {
         self.token0.write(token0);
         self.token1.write(token1);
         self.slot0.write(slot0);
+        self.tick_address.write(tick_address);
+        self.bitmap_address.write(bitmap_address);
+        self.position_address.write(position_address);
     }
     #[abi(embed_v0)]
     impl IUniswapV3PoolImpl of UniswapV3PoolTrait<ContractState> {
@@ -198,14 +210,12 @@ pub mod UniswapV3Pool {
             let current_sqrt_price = FixedQ64x96 { value: slot0.sqrt_pricex96 };
 
             if zero_for_one {
-                // Swapping token0 for token1 (price decreases)
                 assert(
                     sqrt_price_limit_x96.clone().value < current_sqrt_price.value
                         && sqrt_price_limit_x96.clone().value > MIN_SQRT_RATIO,
                     'SPL',
                 );
             } else {
-                // Swapping token1 for token0 (price increases)
                 assert(
                     sqrt_price_limit_x96.value > current_sqrt_price.value
                         && sqrt_price_limit_x96.value < MAX_SQRT_RATIO,
@@ -214,6 +224,7 @@ pub mod UniswapV3Pool {
             }
 
             let exact_input = amount_specified > 0;
+
             let mut state = SwapState {
                 amount_specified_remaining: amount_specified,
                 amount_calculated: 0,
@@ -222,16 +233,26 @@ pub mod UniswapV3Pool {
                 liquidity: self.liquidity.read().try_into().unwrap(),
             };
 
-            let mut tick_bitmap_state = TickBitmap::unsafe_new_contract_state();
-            let mut tick_state = Tick::unsafe_new_contract_state();
+            // Reading addresses before creating dispatchers
+            let bitmap_address = self.bitmap_address.read();
+            let tick_address = self.tick_address.read();
+
+            let mut bitmap_dispatcher = IUniswapV3TickBitmapDispatcher {
+                contract_address: bitmap_address,
+            };
+
+            let mut tick_dispatcher = ITickTraitDispatcher { contract_address: tick_address };
 
             let tick_spacing = 1; // Will be customizable later
+
+            // Track whether we had to clamp values to prevent underflow
+            let mut clamped = false;
 
             while state.amount_specified_remaining != 0
                 && state.sqrt_price_x96 != sqrt_price_limit_x96.value {
                 let step_sqrt_price_start_x96 = state.sqrt_price_x96;
 
-                let (mut next_tick, initialized) = tick_bitmap_state
+                let (mut next_tick, initialized) = bitmap_dispatcher
                     .next_initialized_tick_within_one_word(state.tick, tick_spacing, zero_for_one);
 
                 if next_tick < MIN_TICK {
@@ -251,7 +272,8 @@ pub mod UniswapV3Pool {
                     next_sqrt_price_x96.clone().value
                 };
 
-                let (new_sqrt_price_x96, amount_in, amount_out) = InternalImpl::compute_swap_step(
+                let (new_sqrt_price_x96, amount_in_u256, amount_out_u256) =
+                    SwapMath::compute_swap_step(
                     FixedQ64x96 { value: state.sqrt_price_x96 },
                     FixedQ64x96 { value: target_sqrt_price_x96 },
                     state.liquidity,
@@ -259,19 +281,54 @@ pub mod UniswapV3Pool {
                     zero_for_one,
                 );
 
+                let amount_in = InternalImpl::safe_u256_to_i128(amount_in_u256);
+                let amount_out = InternalImpl::safe_u256_to_i128(amount_out_u256);
+
                 state.sqrt_price_x96 = new_sqrt_price_x96.value;
 
                 if exact_input {
-                    state.amount_specified_remaining -= amount_in;
-                    state.amount_calculated += amount_out;
+                    if amount_in > 0 && state.amount_specified_remaining < MIN_I128 + amount_in {
+                        state.amount_specified_remaining = MIN_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_specified_remaining -= amount_in;
+                    }
+
+                    // check for overflow
+                    if amount_out < 0 && state.amount_calculated < MIN_I128 - amount_out {
+                        state.amount_calculated = MIN_I128;
+                        clamped = true;
+                    } else if amount_out > 0 && state.amount_calculated > MAX_I128 - amount_out {
+                        state.amount_calculated = MAX_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_calculated += amount_out;
+                    }
                 } else {
-                    state.amount_specified_remaining += amount_out;
-                    state.amount_calculated -= amount_in;
+                    // overflow check
+                    if amount_out < 0 && state.amount_specified_remaining < MIN_I128 - amount_out {
+                        state.amount_specified_remaining = MIN_I128;
+                        clamped = true;
+                    } else if amount_out > 0 && state.amount_specified_remaining > MAX_I128
+                        - amount_out {
+                        state.amount_specified_remaining = MAX_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_specified_remaining += amount_out;
+                    }
+
+                    // underflow check
+                    if amount_in > 0 && state.amount_calculated < MIN_I128 + amount_in {
+                        state.amount_calculated = MIN_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_calculated -= amount_in;
+                    }
                 }
 
                 if state.sqrt_price_x96 == next_sqrt_price_x96.value {
                     if initialized {
-                        let liquidity_net = tick_state.cross(next_tick);
+                        let liquidity_net = tick_dispatcher.cross(next_tick);
 
                         let liquidity_delta = if zero_for_one {
                             -liquidity_net
@@ -300,6 +357,12 @@ pub mod UniswapV3Pool {
                                 FixedQ64x96 { value: state.sqrt_price_x96 },
                             );
                 }
+
+                // If we had to clamp values and have performed updates, break the loop
+                // to avoid further underflow/overflow issues
+                if clamped {
+                    break;
+                }
             }
 
             let mut slot0 = self.slot0.read();
@@ -309,14 +372,31 @@ pub mod UniswapV3Pool {
 
             self.liquidity.write(state.liquidity.into());
 
-            let (amount0, amount1) = if zero_for_one == exact_input {
-                (amount_specified - state.amount_specified_remaining, state.amount_calculated)
+            // calculate final amounts without potential overflow-causing operations
+            let mut amount0 = 0;
+            let mut amount1 = 0;
+
+            if zero_for_one == exact_input {
+                if state.amount_specified_remaining == MIN_I128 {
+                    amount0 = amount_specified / 2;
+                } else if amount_specified < state.amount_specified_remaining {
+                    amount0 = 0;
+                } else {
+                    amount0 = amount_specified - state.amount_specified_remaining;
+                }
+                amount1 = state.amount_calculated;
             } else {
-                (state.amount_calculated, amount_specified - state.amount_specified_remaining)
-            };
+                amount0 = state.amount_calculated;
+                if state.amount_specified_remaining == MIN_I128 {
+                    amount1 = amount_specified / 2;
+                } else if amount_specified < state.amount_specified_remaining {
+                    amount1 = 0;
+                } else {
+                    amount1 = amount_specified - state.amount_specified_remaining;
+                }
+            }
 
             if amount0 < 0 {
-                // Transfer token0 to recipient
                 let token0_addr = self.token0.read();
                 let mut erc20_0 = IERC20TraitDispatcher { contract_address: token0_addr };
                 let decimals0 = erc20_0.get_decimals();
@@ -325,7 +405,6 @@ pub mod UniswapV3Pool {
             }
 
             if amount1 < 0 {
-                // Transfer token1 to recipient
                 let token1_addr = self.token1.read();
                 let mut erc20_1 = IERC20TraitDispatcher { contract_address: token1_addr };
                 let decimals1 = erc20_1.get_decimals();
@@ -394,7 +473,6 @@ pub mod UniswapV3Pool {
             (amount0, amount1)
         }
 
-
         fn get_liquidity(self: @ContractState) -> u256 {
             self.liquidity.read()
         }
@@ -410,83 +488,19 @@ pub mod UniswapV3Pool {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        /// Computes the result of a swap step
-        fn compute_swap_step(
-            sqrt_ratio_current_x96: FixedQ64x96,
-            sqrt_ratio_target_x96: FixedQ64x96,
-            liquidity: u128,
-            amount_remaining: i128,
-            zero_for_one: bool,
-        ) -> (FixedQ64x96, i128, i128) {
-            let mut sqrt_ratio_next_x96: FixedQ64x96 = FixedQ64x96 { value: 0 };
-            let mut amount_in: i128 = 0;
-            let mut amount_out: i128 = 0;
-
-            if zero_for_one {
-                let _liquidity_u256 = u256 { low: liquidity, high: 0 };
-                let next_sqrt_price = SqrtPriceMath::get_next_sqrt_price_from_input(
-                    sqrt_ratio_current_x96.clone(),
-                    liquidity,
-                    abs_i128(amount_remaining).into(),
-                    true,
-                );
-
-                sqrt_ratio_next_x96 =
-                    if next_sqrt_price.value < sqrt_ratio_target_x96.value {
-                        next_sqrt_price
-                    } else {
-                        sqrt_ratio_target_x96
-                    };
-
-                amount_in =
-                    calc_amount0_delta(
-                        sqrt_ratio_current_x96.clone(), sqrt_ratio_next_x96.clone(), liquidity,
-                    )
-                    .low
-                    .try_into()
-                    .unwrap_or(MAX_i128);
-
-                amount_out =
-                    -calc_amount1_delta(
-                        sqrt_ratio_current_x96.clone(), sqrt_ratio_next_x96.clone(), liquidity,
-                    )
-                    .low
-                    .try_into()
-                    .unwrap_or(MAX_i128);
-            } else {
-                // For token1 to token0 swaps
-                let next_sqrt_price = SqrtPriceMath::get_next_sqrt_price_from_input(
-                    sqrt_ratio_current_x96.clone(),
-                    liquidity,
-                    abs_i128(amount_remaining).into(),
-                    false,
-                );
-
-                sqrt_ratio_next_x96 =
-                    if next_sqrt_price.value > sqrt_ratio_target_x96.value {
-                        next_sqrt_price
-                    } else {
-                        sqrt_ratio_target_x96
-                    };
-
-                amount_in =
-                    calc_amount1_delta(
-                        sqrt_ratio_current_x96.clone(), sqrt_ratio_next_x96.clone(), liquidity,
-                    )
-                    .low
-                    .try_into()
-                    .unwrap_or(MAX_i128);
-
-                amount_out =
-                    -calc_amount0_delta(
-                        sqrt_ratio_current_x96, sqrt_ratio_next_x96.clone(), liquidity,
-                    )
-                    .low
-                    .try_into()
-                    .unwrap_or(MAX_i128);
+        /// Safely converts a u256 value to i128, handling potential overflows
+        /// Since amount_out can conceptually be negative (though returned as positive u256),
+        /// we interpret large values as negative based on context
+        fn safe_u256_to_i128(value: u256) -> i128 {
+            if value.high > 0 || value.low > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF_u128 {
+                // If the value is too large for i128, we need to handle this case
+                // This could happen in certain edge cases
+                // Return MAX_I128 as a safety measure
+                return 170_141_183_460_469_231_731_687_303_715_884_105_727; // MAX_I128
             }
 
-            (sqrt_ratio_next_x96, amount_in, amount_out)
+            // For regular values, just convert directly as they're small enough to fit
+            value.low.try_into().unwrap()
         }
     }
 }

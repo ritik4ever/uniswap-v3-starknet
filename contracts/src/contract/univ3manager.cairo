@@ -50,18 +50,20 @@ mod UniswapV3Manager {
             let caller = get_caller_address();
             assert(caller == self.pool_address.read(), 'only pool can call contract');
 
-            // If amount0_delta is positive, we need to send token0 to pool
             if amount0_delta > 0 {
                 let token0 = self.token0.read();
                 let mut token0_dispatcher = IERC20TraitDispatcher { contract_address: token0 };
-                token0_dispatcher.transfer(caller, amount0_delta.try_into().unwrap());
+                let decimals0 = token0_dispatcher.get_decimals();
+                let scaled_amount0 = scale_amount(amount0_delta, decimals0);
+                token0_dispatcher.transfer(caller, scaled_amount0.try_into().unwrap());
             }
 
-            // If amount1_delta is positive, we need to send token1 to pool
             if amount1_delta > 0 {
                 let token1 = self.token1.read();
                 let mut token1_dispatcher = IERC20TraitDispatcher { contract_address: token1 };
-                token1_dispatcher.transfer(caller, amount1_delta.try_into().unwrap());
+                let decimals1 = token1_dispatcher.get_decimals();
+                let scaled_amount1 = scale_amount(amount1_delta, decimals1);
+                token1_dispatcher.transfer(caller, scaled_amount1.try_into().unwrap());
             }
         }
 
