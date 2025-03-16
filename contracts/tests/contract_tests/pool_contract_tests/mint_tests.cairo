@@ -22,8 +22,6 @@ fn test_mint_position_within_price_range() {
     let (amount0, amount1) = manager_dispatcher
         .mint(params.lower_tick, params.upper_tick, params.liq.try_into().unwrap(), array![]);
 
-    println!("Amount0 returned: {}, expected: {}", amount0, expected_amount0);
-    println!("Amount1 returned: {}, expected: {}", amount1, expected_amount1);
     assert(is_within_margin(amount0, expected_amount0, 1), 'Amount0 outside error margin');
     assert(is_within_margin(amount1, expected_amount1, 1), 'Amount1 outside error margin');
 
@@ -51,7 +49,6 @@ fn test_mint_position_below_price_range() {
     let (amount0, amount1) = manager_dispatcher
         .mint(params.lower_tick, params.upper_tick, params.liq.try_into().unwrap(), array![]);
 
-    println!("Below range - Amount0: {}, Amount1: {}", amount0, amount1);
     assert(is_within_margin(amount0, expected_amount0, 1), 'Amount0 outside error margin');
     assert(is_within_margin(amount1, expected_amount1, 1), 'Amount1 outside error margin');
     assert(amount1 == 0, 'Should require no token1');
@@ -80,7 +77,6 @@ fn test_mint_position_above_price_range() {
     let (amount0, amount1) = manager_dispatcher
         .mint(params.lower_tick, params.upper_tick, params.liq.try_into().unwrap(), array![]);
 
-    println!("Above range - Amount0: {}, Amount1: {}", amount0, amount1);
     assert(is_within_margin(amount0, expected_amount0, 1), 'Amount0 outside error margin');
     assert(is_within_margin(amount1, expected_amount1, 1), 'Amount1 outside error margin');
     assert(amount0 == 0, 'Should require no token0');
@@ -109,7 +105,6 @@ fn test_mint_position_narrow_price_range() {
     let (amount0, amount1) = manager_dispatcher
         .mint(params.lower_tick, params.upper_tick, params.liq.try_into().unwrap(), array![]);
 
-    println!("Narrow range - Amount0: {}, Amount1: {}", amount0, amount1);
     assert(is_within_margin(amount0, expected_amount0, 1), 'Amount0 outside error margin');
     assert(is_within_margin(amount1, expected_amount1, 1), 'Amount1 outside error margin');
 
@@ -140,8 +135,6 @@ fn test_mint_position_wide_price_range() {
     let (amount0, amount1) = manager_dispatcher
         .mint(params.lower_tick, params.upper_tick, params.liq.try_into().unwrap(), array![]);
 
-    println!("Wide range - Amount0: {}, Amount1: {}", amount0, expected_amount0);
-    println!("Expected - Amount0: {}, Amount1: {}", expected_amount0, expected_amount1);
     assert(is_within_margin(amount0, expected_amount0, 1), 'Amount0 outside error margin');
     assert(is_within_margin(amount1, expected_amount1, 1), 'Amount1 outside error margin');
 
@@ -361,6 +354,9 @@ pub fn setup_test_environment(
         params.cur_sqrtp.try_into().unwrap(),
         0.into(),
         params.cur_tick.into(),
+        0.into(),
+        0.into(),
+        0.into(),
     ];
     let pool_address = deploy_contract("UniswapV3Pool", pool_calldata);
 

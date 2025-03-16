@@ -11,6 +11,7 @@ mod math_tests {
     mod fullmath_test;
     mod liquidity_math_test;
     mod sqrtprice_math_test;
+    mod swap_math_tests;
     mod tick_math_test;
     mod number {
         mod fixed_point_test;

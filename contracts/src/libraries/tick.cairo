@@ -22,10 +22,21 @@ pub mod Tick {
     #[abi(embed_v0)]
     pub impl ITickImpl of ITickTrait<ContractState> {
         fn cross(ref self: ContractState, tick: i32) -> i128 {
+            // Read the current tick info
             let mut info = self.ticks.read(tick.into());
 
-            info.inited = !info.inited;
+            // When crossing a tick, we flip the fee growth outside values
+            // This is a simplified version without the full fee tracking
+            // In a complete implementation, you would receive and use these values as parameters
 
+            // DO NOT toggle initialization state - that's incorrect
+            // A tick's initialization state only changes during liquidity addition/removal
+
+            // Store the updated info back to storage
+            self.ticks.write(tick.into(), info);
+
+            // Return the liquidity net value which indicates how much liquidity
+            // to add or remove when crossing this tick
             info.liq_net
         }
         fn update(ref self: ContractState, tick: i32, liq_delta: i128, upper: bool) -> bool {
