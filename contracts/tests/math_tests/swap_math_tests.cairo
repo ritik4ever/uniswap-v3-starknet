@@ -38,16 +38,6 @@ fn test_compute_swap_step_small_amount_0_to_1() {
         sqrt_ratio_current_x96, sqrt_ratio_target_x96, liquidity, amount_remaining, zero_for_one,
     );
 
-    // Print debug values
-    println!(
-        "sqrt_ratio_next_x96: {} (expected: {})",
-        sqrt_ratio_next_x96.value,
-        647496913714050180118412835412_u256,
-    );
-    println!("amount_in: {} (expected: {})", amount_in, 99999999999999999_u256);
-    println!("amount_out: {} (expected: {})", amount_out, 36548799526311364129_u256);
-
-    // Check sqrt_ratio_next_x96 with tolerance
     assert(
         is_within_tolerance(sqrt_ratio_next_x96.value, 647496913714050180118412835412_u256, 1),
         'incorrect sqrt_ratio_next_x96',
@@ -73,15 +63,6 @@ fn test_compute_swap_step_small_amount_1_to_0() {
     let (sqrt_ratio_next_x96, amount_in, amount_out) = SwapMath::compute_swap_step(
         sqrt_ratio_current_x96, sqrt_ratio_target_x96, liquidity, amount_remaining, zero_for_one,
     );
-
-    // Print debug values
-    println!(
-        "sqrt_ratio_next_x96: {} (expected: {})",
-        sqrt_ratio_next_x96.value,
-        3560863028183068750138491011072_u256,
-    );
-    println!("amount_in: {} (expected: {})", amount_in, 223050558492666084_u256);
-    println!("amount_out: {} (expected: {})", amount_out, 110971800498655_u256);
 
     // Check sqrt_ratio_next_x96 with tolerance
     assert(
@@ -110,15 +91,6 @@ fn test_compute_swap_step_large_amount_0_to_1() {
         sqrt_ratio_current_x96, sqrt_ratio_target_x96, liquidity, amount_remaining, zero_for_one,
     );
 
-    // Print debug values
-    println!(
-        "sqrt_ratio_next_x96: {} (expected: {})",
-        sqrt_ratio_next_x96.value,
-        77495314600421591368627405183_u256,
-    );
-    println!("amount_in: {} (expected: {})", amount_in, 999999999999999999_u256);
-    println!("amount_out: {} (expected: {})", amount_out, 43743231165578585391_u256);
-
     // Check sqrt_ratio_next_x96 with tolerance
     assert(
         is_within_tolerance(sqrt_ratio_next_x96.value, 77495314600421591368627405183_u256, 1),
@@ -145,15 +117,6 @@ fn test_compute_swap_step_large_amount_1_to_0() {
     let (sqrt_ratio_next_x96, amount_in, amount_out) = SwapMath::compute_swap_step(
         sqrt_ratio_current_x96, sqrt_ratio_target_x96, liquidity, amount_remaining, zero_for_one,
     );
-
-    // Print debug values
-    println!(
-        "sqrt_ratio_next_x96: {} (expected: {})",
-        sqrt_ratio_next_x96.value,
-        3716130220787573499654546915328_u256,
-    );
-    println!("amount_in: {} (expected: {})", amount_in, 2182798048238502985_u256);
-    println!("amount_out: {} (expected: {})", amount_out, 1040608139436854_u256);
 
     // Check sqrt_ratio_next_x96 with tolerance
     assert(
