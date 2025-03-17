@@ -1,6 +1,4 @@
 pub mod TickMath {
-    // HIGH P TODO: Unit tests
-
     use alexandria_math::const_pow::pow2_u256;
     use alexandria_math::i257::I257Impl;
     use contracts::libraries::math::numbers::fixed_point::{FixedQ64x96, IFixedQ64x96Impl};

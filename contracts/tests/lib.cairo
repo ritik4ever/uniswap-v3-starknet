@@ -2,6 +2,7 @@
 mod contract_tests {
     mod pool_contract_tests {
         mod mint_tests;
+        mod swap_tests;
     }
     mod utils;
 }

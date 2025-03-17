@@ -272,17 +272,13 @@ pub mod UniswapV3Pool {
                     next_sqrt_price_x96.clone().value
                 };
 
-                let (new_sqrt_price_x96, amount_in_u256, amount_out_u256) =
-                    SwapMath::compute_swap_step(
+                let (new_sqrt_price_x96, amount_in, amount_out) = InternalImpl::process_swap_step(
                     FixedQ64x96 { value: state.sqrt_price_x96 },
                     FixedQ64x96 { value: target_sqrt_price_x96 },
                     state.liquidity,
                     state.amount_specified_remaining,
                     zero_for_one,
                 );
-
-                let amount_in = InternalImpl::safe_u256_to_i128(amount_in_u256);
-                let amount_out = InternalImpl::safe_u256_to_i128(amount_out_u256);
 
                 state.sqrt_price_x96 = new_sqrt_price_x96.value;
 
@@ -378,7 +374,7 @@ pub mod UniswapV3Pool {
 
             if zero_for_one == exact_input {
                 if state.amount_specified_remaining == MIN_I128 {
-                    amount0 = amount_specified / 2;
+                    amount0 = amount_specified;
                 } else if amount_specified < state.amount_specified_remaining {
                     amount0 = 0;
                 } else {
@@ -388,7 +384,7 @@ pub mod UniswapV3Pool {
             } else {
                 amount0 = state.amount_calculated;
                 if state.amount_specified_remaining == MIN_I128 {
-                    amount1 = amount_specified / 2;
+                    amount1 = amount_specified;
                 } else if amount_specified < state.amount_specified_remaining {
                     amount1 = 0;
                 } else {
@@ -488,6 +484,29 @@ pub mod UniswapV3Pool {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        fn process_swap_step(
+            sqrt_ratio_current_x96: FixedQ64x96,
+            sqrt_ratio_target_x96: FixedQ64x96,
+            liquidity: u128,
+            amount_remaining: i128,
+            zero_for_one: bool,
+        ) -> (FixedQ64x96, i128, i128) {
+            // Call the core swap math function
+            let (new_sqrt_price, amount_in, amount_out) = SwapMath::compute_swap_step(
+                sqrt_ratio_current_x96,
+                sqrt_ratio_target_x96,
+                liquidity,
+                amount_remaining,
+                zero_for_one,
+            );
+            let amount_out_u128: u128 = amount_out.try_into().expect('amtout128');
+            let amount_in_u128: u128 = amount_in.try_into().expect('amtin128');
+            let signed_amount_in = amount_in_u128.try_into().expect('signd_amt_in');
+            let signed_amount_out = -(amount_out_u128.try_into().expect('signd_amt_out'));
+
+            (new_sqrt_price, signed_amount_in, signed_amount_out)
+        }
+
         /// Safely converts a u256 value to i128, handling potential overflows
         /// Since amount_out can conceptually be negative (though returned as positive u256),
         /// we interpret large values as negative based on context

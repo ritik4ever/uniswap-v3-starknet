@@ -1,6 +1,5 @@
 use contracts::libraries::math::numbers::fixed_point::FixedQ64x96;
 use contracts::libraries::math::swap_math::SwapMath;
-
 const MAX_I128: i128 = 170_141_183_460_469_231_731_687_303_715_884_105_727;
 
 
