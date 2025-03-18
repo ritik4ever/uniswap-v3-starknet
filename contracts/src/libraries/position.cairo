@@ -29,11 +29,21 @@ pub mod Position {
 
     #[abi(embed_v0)]
     pub impl IPositionImpl of IPositionTrait<ContractState> {
-        fn update(ref self: ContractState, key: Key, liq_delta: u128) {
+        fn update(ref self: ContractState, key: Key, liq_delta: i128) {
             let hash = PoseidonTrait::new().update_with(key).finalize();
             let mut info = self.positions.read(hash);
-            let liq_after = liq_delta + info.liq; // info.liq is liq_before
-            info.liq = liq_after;
+
+            if liq_delta >= 0 {
+                info.liq = info.liq + liq_delta.try_into().unwrap();
+            } else {
+                let abs_delta: u128 = (-liq_delta).try_into().unwrap();
+                if abs_delta >= info.liq {
+                    info.liq = 0;
+                } else {
+                    info.liq = info.liq - abs_delta;
+                }
+            }
+
             self.positions.write(hash, info);
         }
 

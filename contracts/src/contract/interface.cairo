@@ -58,7 +58,7 @@ pub trait ITickTrait<TContractState> {
 
 #[starknet::interface]
 pub trait IPositionTrait<TContractState> {
-    fn update(ref self: TContractState, key: Key, liq_delta: u128);
+    fn update(ref self: TContractState, key: Key, liq_delta: i128);
     fn get(self: @TContractState, key: Key) -> Info;
 }
 

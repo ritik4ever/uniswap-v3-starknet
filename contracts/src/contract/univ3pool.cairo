@@ -88,6 +88,15 @@ pub mod UniswapV3Pool {
         liquidity: u128,
     }
 
+    #[derive(Copy, Drop)]
+    struct StepState {
+        sqrt_price_startx96: u256,
+        next_tick: i32,
+        sqrt_price_nextx96: u256,
+        amount_in: u256,
+        amount_out: u256,
+    }
+
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -174,7 +183,8 @@ pub mod UniswapV3Pool {
                 bitmap_state.flip_tick(upper_tick, tick_spacing);
             }
 
-            position_state.update(key, amount);
+            let liq_delta_i128: i128 = amount.try_into().expect('liq_delta_i128');
+            position_state.update(key, liq_delta_i128);
             let new_liq = position_state.get(key).liq;
 
             if current_tick >= lower_tick && current_tick < upper_tick {
@@ -491,7 +501,6 @@ pub mod UniswapV3Pool {
             amount_remaining: i128,
             zero_for_one: bool,
         ) -> (FixedQ64x96, i128, i128) {
-            // Call the core swap math function
             let (new_sqrt_price, amount_in, amount_out) = SwapMath::compute_swap_step(
                 sqrt_ratio_current_x96,
                 sqrt_ratio_target_x96,
