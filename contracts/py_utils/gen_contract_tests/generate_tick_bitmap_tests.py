@@ -61,12 +61,6 @@ def generate_cairo_tests():
     code = """
 #[test]
 mod tick_bitmap_tests {
-    use core::debug::PrintTrait;
-    use contracts::contract::interface::IUniswapV3TickBitmap;
-    use contracts::contract::interface::IUniswapV3TickBitmapDispatcher;
-    use starknet::{ContractAddress, deploy_syscall, get_caller_address, get_contract_address, class_hash_to_felt252};
-    use starknet::class_hash::declare;
-    use core::result::ResultTrait;
     
     fn deploy_tick_bitmap() -> IUniswapV3TickBitmapDispatcher {
         // Declare the contract
