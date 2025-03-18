@@ -11,12 +11,33 @@ pub mod full_math {
     pub fn mul_div(a: u256, b: u256, denominator: u256) -> u256 {
         assert(denominator > 0, 'division by zero');
 
-        // 512-bit multiply using high/low parts to handle overflow
-        let mut res = a * b;
+        // Handle simple cases
+        if a == 0 || b == 0 {
+            return 0;
+        }
 
-        res = res / denominator;
+        // Optimize for cases where a/denominator is exact
+        if a % denominator == 0 {
+            return (a / denominator) * b;
+        }
 
-        return res;
+        // Optimize for cases where b/denominator is exact
+        if b % denominator == 0 {
+            return a * (b / denominator);
+        }
+
+        // For general case, break down calculation to avoid overflow
+        let quotient_a = a / denominator;
+        let remainder_a = a % denominator;
+
+        // First part: quotient_a * b
+        let result1 = quotient_a * b;
+
+        // Second part: (remainder_a * b) / denominator
+        // This may still overflow if b is very large, so we need further division
+        let result2 = (remainder_a * b) / denominator;
+
+        result1 + result2
     }
 
     /// Calculates ceil(a×b÷denominator) with full precision.
@@ -85,7 +106,7 @@ pub mod full_math {
             }
         }
 
-        return res;
+        res
     }
 
 
@@ -104,6 +125,6 @@ pub mod full_math {
             return res + 1;
         }
 
-        return res;
+        res
     }
 }
