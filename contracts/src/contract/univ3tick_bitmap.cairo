@@ -87,19 +87,21 @@ pub mod TickBitmap {
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn position(tick: i32) -> (i16, u8) {
-            // shift right by 8 (divide by 2**8) to calculate the positions
-            let word_pos: i16 = (tick / 256).try_into().unwrap();
-            let bit_pos: u8 = (tick % 256).try_into().unwrap();
-
-            // If tick is negative and not a multiple of 256, we need to adjust the position
-            // This ensures correct handling of negative ticks
-            let (adjusted_word_pos, adjusted_bit_pos) = if tick < 0 && tick % 256 != 0 {
-                (word_pos - 1, 255_u8 - (((-tick) % 256) - 1).try_into().unwrap())
+            if tick >= 0 {
+                let word_pos: i16 = (tick / 256).try_into().unwrap();
+                let bit_pos: u8 = (tick % 256).try_into().unwrap();
+                return (word_pos, bit_pos);
             } else {
-                (word_pos, bit_pos.try_into().unwrap())
-            };
+                //  special handling for negative ticks
+                let abs_tick = -tick;
+                let word_pos: i16 = (-((abs_tick - 1) / 256) - 1).try_into().unwrap();
 
-            (adjusted_word_pos, adjusted_bit_pos)
+                // For bit position, we need to calculate the offset from the high end
+                let bit_pos_val = 255 - ((abs_tick - 1) % 256);
+                let bit_pos: u8 = bit_pos_val.try_into().unwrap();
+
+                return (word_pos, bit_pos);
+            }
         }
     }
 }

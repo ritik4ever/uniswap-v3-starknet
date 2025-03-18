@@ -4,6 +4,7 @@ mod contract_tests {
         mod mint_tests;
         mod swap_tests;
     }
+    mod tick_bitmap_tests;
     mod utils;
 }
 
