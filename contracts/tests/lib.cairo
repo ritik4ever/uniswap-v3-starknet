@@ -5,6 +5,7 @@ mod contract_tests {
         mod swap_tests;
     }
     mod position_tests;
+    mod quoter_tests;
     mod tick_bitmap_tests;
     mod tick_tests;
     mod utils;

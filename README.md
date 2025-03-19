@@ -40,7 +40,7 @@ We are actively looking to onboard contributors who are eager to learn Cairo sma
 When contributing, make sure to use your own fork and create a new branch on your fork before opening a pull request.
 
 We are using `starknet-foundry 0.38.3`, and `scarb 2.11.1` 
-setup using asdf:
+setup using asdf(inside of the contracts folder):
 ```bash
 asdf local scarb 2.11.1
 asdf local starnet-foundry 0.38.3

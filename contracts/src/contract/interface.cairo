@@ -1,4 +1,5 @@
 use contracts::contract::univ3pool::Slot0;
+use contracts::contract::univ3quoter::QuoteParams;
 use contracts::libraries::math::numbers::fixed_point::FixedQ64x96;
 use contracts::libraries::position::{Info, Key};
 use starknet::ContractAddress;
@@ -14,6 +15,12 @@ pub trait UniswapV3PoolTrait<TContractState> {
     ) -> (u256, u256);
     fn get_liquidity(self: @TContractState) -> u256;
     fn is_tick_init(self: @TContractState, tick: i32) -> bool;
+    fn simulate_swap(
+        self: @TContractState,
+        zero_for_one: bool,
+        amount_specified: i128,
+        sqrt_price_limit_x96: FixedQ64x96,
+    ) -> (i128, i128, u256, i32);
     fn slot0(self: @TContractState) -> Slot0;
     fn swap(
         ref self: TContractState,
@@ -47,6 +54,11 @@ pub trait IUniswapV3Manager<TContractState> {
         amount: u128,
         data: Array<felt252>,
     ) -> (u256, u256);
+}
+
+#[starknet::interface]
+pub trait IUniswapV3Quoter<TContractState> {
+    fn quote(self: @TContractState, params: QuoteParams) -> (i128, i128, u256, i32);
 }
 
 #[starknet::interface]

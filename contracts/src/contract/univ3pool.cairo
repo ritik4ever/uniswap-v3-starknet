@@ -478,6 +478,15 @@ pub mod UniswapV3Pool {
             Tick::unsafe_new_contract_state().is_init(tick)
         }
 
+        fn simulate_swap(
+            self: @ContractState,
+            zero_for_one: bool,
+            amount_specified: i128,
+            sqrt_price_limit_x96: FixedQ64x96,
+        ) -> (i128, i128, u256, i32) {
+            self._simulate_swap(zero_for_one, amount_specified, sqrt_price_limit_x96)
+        }
+
         fn slot0(self: @ContractState) -> Slot0 {
             self.slot0.read()
         }
@@ -520,6 +529,217 @@ pub mod UniswapV3Pool {
 
             // For regular values, just convert directly as they're small enough to fit
             value.low.try_into().unwrap()
+        }
+
+        /// EXPERIMENTAL: Simulates a swap without modifying contract state and returns the expected
+        /// amounts.
+        ///
+        /// This function mimics the logic of `swap` but doesn't write to storage, transfer tokens,
+        /// or call the swap callback. It provides an accurate estimate of what a real swap would do
+        /// without requiring a transaction.
+        ///
+        /// # Arguments
+        ///
+        /// * `zero_for_one` - The direction of the swap, true for token0 to token1, false for
+        /// token1 to token0 * `amount_specified` - The amount of the swap, positive for exact
+        /// input, negative for exact output * `sqrt_price_limit_x96` - The price limit of the swap
+        ///
+        /// # Returns
+        ///
+        /// * `amount0` - The amount of token0 (positive if sent, negative if received)
+        /// * `amount1` - The amount of token1 (positive if sent, negative if received)
+        /// * `sqrt_price_x96_after` - The sqrt price after the swap
+        /// * `tick_after` - The tick after the swap
+        fn _simulate_swap(
+            self: @ContractState,
+            zero_for_one: bool,
+            amount_specified: i128,
+            sqrt_price_limit_x96: FixedQ64x96,
+        ) -> (i128, i128, u256, i32) {
+            assert(amount_specified != 0, 'AS'); // Amount specified must be non-zero
+
+            let slot0 = self.slot0.read();
+            let current_sqrt_price = FixedQ64x96 { value: slot0.sqrt_pricex96 };
+            println!("sim swap current sqrt price: {:?}", current_sqrt_price);
+            println!("sqrt price limit: {:?}", sqrt_price_limit_x96);
+            if zero_for_one {
+                assert(
+                    sqrt_price_limit_x96.clone().value < current_sqrt_price.value
+                        && sqrt_price_limit_x96.clone().value > MIN_SQRT_RATIO,
+                    'SPL_underflow',
+                );
+            } else {
+                assert(
+                    sqrt_price_limit_x96.value > current_sqrt_price.value
+                        && sqrt_price_limit_x96.value < MAX_SQRT_RATIO,
+                    'SPL_overflow',
+                );
+            }
+
+            let exact_input = amount_specified > 0;
+
+            let mut state = SwapState {
+                amount_specified_remaining: amount_specified,
+                amount_calculated: 0,
+                sqrt_price_x96: slot0.sqrt_pricex96,
+                tick: slot0.tick,
+                liquidity: self.liquidity.read().try_into().unwrap(),
+            };
+
+            // Reading addresses before creating dispatchers
+            let bitmap_address = self.bitmap_address.read();
+            let tick_address = self.tick_address.read();
+
+            let bitmap_dispatcher = IUniswapV3TickBitmapDispatcher {
+                contract_address: bitmap_address,
+            };
+
+            let tick_dispatcher = ITickTraitDispatcher { contract_address: tick_address };
+
+            let tick_spacing = 1; // Will be customizable later
+
+            // Track whether we had to clamp values to prevent underflow
+            let mut clamped = false;
+
+            while state.amount_specified_remaining != 0
+                && state.sqrt_price_x96 != sqrt_price_limit_x96.value {
+                let step_sqrt_price_start_x96 = state.sqrt_price_x96;
+
+                let (mut next_tick, initialized) = bitmap_dispatcher
+                    .next_initialized_tick_within_one_word(state.tick, tick_spacing, zero_for_one);
+
+                if next_tick < MIN_TICK {
+                    next_tick = MIN_TICK;
+                } else if next_tick > MAX_TICK {
+                    next_tick = MAX_TICK;
+                }
+
+                let next_sqrt_price_x96 = TickMath::get_sqrt_ratio_at_tick(next_tick);
+
+                let target_sqrt_price_x96 = if (zero_for_one
+                    && next_sqrt_price_x96.clone().value < sqrt_price_limit_x96.value)
+                    || (!zero_for_one
+                        && next_sqrt_price_x96.clone().value > sqrt_price_limit_x96.value) {
+                    sqrt_price_limit_x96.value
+                } else {
+                    next_sqrt_price_x96.clone().value
+                };
+
+                let (new_sqrt_price_x96, amount_in, amount_out) = Self::process_swap_step(
+                    FixedQ64x96 { value: state.sqrt_price_x96 },
+                    FixedQ64x96 { value: target_sqrt_price_x96 },
+                    state.liquidity,
+                    state.amount_specified_remaining,
+                    zero_for_one,
+                );
+
+                state.sqrt_price_x96 = new_sqrt_price_x96.value;
+
+                if exact_input {
+                    if amount_in > 0 && state.amount_specified_remaining < MIN_I128 + amount_in {
+                        state.amount_specified_remaining = MIN_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_specified_remaining -= amount_in;
+                    }
+
+                    // check for overflow
+                    if amount_out < 0 && state.amount_calculated < MIN_I128 - amount_out {
+                        state.amount_calculated = MIN_I128;
+                        clamped = true;
+                    } else if amount_out > 0 && state.amount_calculated > MAX_I128 - amount_out {
+                        state.amount_calculated = MAX_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_calculated += amount_out;
+                    }
+                } else {
+                    // overflow check
+                    if amount_out < 0 && state.amount_specified_remaining < MIN_I128 - amount_out {
+                        state.amount_specified_remaining = MIN_I128;
+                        clamped = true;
+                    } else if amount_out > 0 && state.amount_specified_remaining > MAX_I128
+                        - amount_out {
+                        state.amount_specified_remaining = MAX_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_specified_remaining += amount_out;
+                    }
+
+                    // underflow check
+                    if amount_in > 0 && state.amount_calculated < MIN_I128 + amount_in {
+                        state.amount_calculated = MIN_I128;
+                        clamped = true;
+                    } else {
+                        state.amount_calculated -= amount_in;
+                    }
+                }
+
+                if state.sqrt_price_x96 == next_sqrt_price_x96.value {
+                    if initialized {
+                        // NOTE: This call to cross() might try to modify state in the Tick contract
+                        // we would possibly need a view only alternative.
+                        let liquidity_net = tick_dispatcher.cross(next_tick);
+
+                        let liquidity_delta = if zero_for_one {
+                            -liquidity_net
+                        } else {
+                            liquidity_net
+                        };
+
+                        state
+                            .liquidity =
+                                if liquidity_delta > 0 {
+                                    state.liquidity + liquidity_delta.try_into().unwrap()
+                                } else {
+                                    state.liquidity - (-liquidity_delta).try_into().unwrap()
+                                };
+                    }
+
+                    state.tick = if zero_for_one {
+                        next_tick - 1
+                    } else {
+                        next_tick
+                    };
+                } else if state.sqrt_price_x96 != step_sqrt_price_start_x96 {
+                    state
+                        .tick =
+                            TickMath::get_tick_at_sqrt_ratio(
+                                FixedQ64x96 { value: state.sqrt_price_x96 },
+                            );
+                }
+
+                // If we had to clamp values and have performed updates, break the loop
+                // to avoid further underflow/overflow issues
+                if clamped {
+                    break;
+                }
+            }
+
+            let mut amount0 = 0;
+            let mut amount1 = 0;
+
+            if zero_for_one == exact_input {
+                if state.amount_specified_remaining == MIN_I128 {
+                    amount0 = amount_specified;
+                } else if amount_specified < state.amount_specified_remaining {
+                    amount0 = 0;
+                } else {
+                    amount0 = amount_specified - state.amount_specified_remaining;
+                }
+                amount1 = state.amount_calculated;
+            } else {
+                amount0 = state.amount_calculated;
+                if state.amount_specified_remaining == MIN_I128 {
+                    amount1 = amount_specified;
+                } else if amount_specified < state.amount_specified_remaining {
+                    amount1 = 0;
+                } else {
+                    amount1 = amount_specified - state.amount_specified_remaining;
+                }
+            }
+
+            (amount0, amount1, state.sqrt_price_x96, state.tick)
         }
     }
 }
