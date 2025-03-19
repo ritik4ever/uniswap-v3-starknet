@@ -1,52 +1,61 @@
-# WIP: AMM on Starknet based on Uniswap v3
+# Educational Uniswap V3 on StarkNet
 
-## Project Overview
-This project aims to implement Uniswap V3's concentrated liquidity AMM on Starknet using Cairo. While Uniswap V3 has been deployed on various EVM chains, implementing it on a ZK-rollup with a non-EVM virtual machine represents a cutting-edge technological challenge with significant implications for the DeFi ecosystem.
+A hands-on learning project to master DeFi protocols and Cairo smart contracts on StarkNet.
 
-## Key Challenges
+## Project Status
+- **Contracts Status**: Alpha - ~80% Complete
+- **Frontend Status**: 0% (Only initiated)
+- **Documentation/Book Status**: Planned (To begin after contracts completion)
 
-### Language Translation Complexity
-- Many Solidity functions aren't directly supported in Cairo, requiring creative workarounds or complete rewrites
-- Cairo's different programming paradigm requires rethinking implementation approaches rather than direct translation
+## Educational Purpose
 
-### Mathematical Implementation
-- Implementing Uniswap V3's concentrated liquidity math in Cairo requires deep understanding of both the formulas and Cairo's computational model
-- Tick-based price ranges and bitmap implementations become even more complex in a non-EVM environment
-- Fixed-point math libraries must be reimplemented from scratch in Cairo's unique numeric system
+This project serves as a comprehensive educational resource for developers interested in:
+- Understanding how concentrated liquidity AMMs work at a deep technical level
+- Learning advanced Cairo smart contract development through a real-world DeFi protocol
+- Exploring the mathematical foundations that power modern DEXs
+- Building complex financial protocols on StarkNet's ZK-rollup architecture
 
-### Security Considerations
-- Executing Uniswap V3 logic on a non-native VM introduces unique security risks not present in EVM implementations
-- ZK-specific optimizations may introduce subtle differences in behavior compared to the original implementation
-- Additional auditing and testing infrastructure must be developed specifically for this Cairo implementation
+Rather than just a port, this implementation walks through the development process step-by-step, with detailed comments and documentation explaining the "why" behind each component.
 
-## Development Roadmap
-1. **Core Pool Implementation** (Implemented, needs testing)
-   - Basic swap functionality
-   - Single-tick liquidity provision
-   - Callback pattern implementation
+## Current Implementation Status
 
-* Basic Frontend <- yet to be implemented
+### Completed & Documented Components
+- **Core Math Libraries** - Learn fixed-point math and square root price calculations
+- **TickBitmap Contract** - Understand efficient data structures for tick tracking
+- **Tick Contract** - Explore tick crossings and liquidity tracking
+- **Position Contract** - Master concentrated liquidity position management
+- **Core Pool Contract** - Swap and Mint functions implemented
+- **Manager Contract** - Swap and Mint callback functions implemented
 
-2. **Tick Bitmap & Cross-Tick Swaps** (Upcoming)
-   - Efficient tick tracking system <- implemented
-   - Cross-tick swap routing
-   - Fee management
+### Learning Opportunities for Contributors
 
-3. **Advanced Features** (Planned)
-   - Multi-pool swap routing
-   - Oracle functionality
-   - Position NFTs
+We are actively looking to onboard contributors who are eager to learn Cairo smart contract development while helping grow the Starknet developer ecosystem. By contributing to this project, you'll not only enhance your own understanding of DeFi and Cairo, but also help create educational resources that will benefit the broader community.
 
-## Potential for a Development Book
+## Getting Started
 
-This project could be adapted into a comprehensive development guide for implementing complex DeFi protocols on Starknet, similar to Jeiwan's Uniswap V3 Development Book. Such a book would:
 
-- Guide developers through building a fully-functional Uniswap V3 clone on Starknet from scratch
-- Follow a milestone-based approach, breaking down complex components into manageable learning modules
-- Explore the mathematical foundations of concentrated liquidity AMMs while demonstrating their implementation in Cairo
-- Serve as a bridge between EVM-based and Cairo-based development knowledge
-- Highlight the unique challenges and advantages of ZK-rollup implementations
 
-## Contributing
-This project is open for contributions and feedback.
-[DM](https://augvst1n.t.me/)
+### Setup
+
+When contributing, make sure to use your own fork and create a new branch on your fork before opening a pull request.
+
+We are using `starknet-foundry 0.38.3`, and `scarb 2.11.1` 
+setup using asdf:
+```bash
+asdf local scarb 2.11.1
+asdf local starnet-foundry 0.38.3
+```
+
+In the `contracts` folder, run:
+```bash
+snforge test
+```
+
+If you are setup properly, everything should compile and tests should be passing.
+
+
+### Additional
+Join our our [Telegram group](https://t.me/+bPtBG-CEsLlhYzM1)! Don't hesitate to leave a message if you need anything
+
+
+*This educational implementation is not affiliated with or endorsed by Uniswap Labs.*
