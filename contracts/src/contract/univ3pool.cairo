@@ -88,15 +88,6 @@ pub mod UniswapV3Pool {
         liquidity: u128,
     }
 
-    #[derive(Copy, Drop)]
-    struct StepState {
-        sqrt_price_startx96: u256,
-        next_tick: i32,
-        sqrt_price_nextx96: u256,
-        amount_in: u256,
-        amount_out: u256,
-    }
-
     #[constructor]
     fn constructor(
         ref self: ContractState,
