@@ -5,7 +5,7 @@ A hands-on learning project to master DeFi protocols and Cairo smart contracts o
 ## Project Status
 - **Contracts Status**: Alpha - ~80% Complete
 - **Frontend Status**: 0% (Only initiated)
-- **Documentation/Book Status**: Planned (To begin after contracts completion)
+- **Documentation/Book Status**: Planned, inspired by [Jeiwan's awesome book](https://uniswapv3book.com/) (To begin after contracts completion)
 
 ## Educational Purpose
 
@@ -15,7 +15,7 @@ This project serves as a comprehensive educational resource for developers inter
 - Exploring the mathematical foundations that power modern DEXs
 - Building complex financial protocols on StarkNet's ZK-rollup architecture
 
-Rather than just a port, this implementation walks through the development process step-by-step, with detailed comments and documentation explaining the "why" behind each component.
+Rather than just a port, this implementation walks through the development process step-by-step, with documentation explaining the "why" behind each component.
 
 ## Current Implementation Status
 
