@@ -286,9 +286,6 @@ fn test_get_next_sqrt_price_from_output_token0_out() {
     );
 }
 
-
-// <!IMPORTANT!> TODO: Make this test pass by fixing the overflow handling! in the
-// libraries/math/fullmath.cairo
 #[test]
 fn test_get_next_sqrt_price_from_output_exact_eth_out() {
     // Test price calculation for token0 output

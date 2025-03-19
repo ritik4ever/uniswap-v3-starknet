@@ -1,0 +1,52 @@
+2025-03-19 19:26:37,105 - swap_test_generator - INFO - Starting swap test generator script
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Printing SwapTestParams struct definition
+2025-03-19 19:26:37,105 - swap_test_generator - INFO - Starting to generate simplified swap test cases
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Generating Case 1: Single-tick swap (token0 to token1)
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Current price: 2000.0, Current tick: 76012
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Current sqrt price: 3543191142285914378072636784640
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Lower tick: 75499, Upper tick: 76500
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Liquidity: 1000000000000000000
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Calculated mint_amount0: 538890751398656
+2025-03-19 19:26:37,105 - swap_test_generator - DEBUG - Calculated mint_amount1: 1132370114589058176
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Precomputed amount1_delta: -1996801996801996
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Calculated amount1 with formula: 0
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Ratio between calculated and precomputed: 0.0
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Generating Case 2: Single-tick swap (token1 to token0)
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Case 2 created with amount0_delta: -999500, amount1_delta: 2000000
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Generating Case 3: Exact tick boundary swap
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Current tick: 76012, Target tick: 76011
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Current sqrt price: 3543191142285914378072636784640, Target sqrt price: 3542867859962667947235494330368
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Calculated exact_amount: 2040384454843
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Calculated expected output: 4080396578530099
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Generating Case 4: Round numbers swap
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Using round values: price=1000.0, liquidity=1000000000000000000, amount=10000000000000000
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Calculated expected output: 158511156579244512
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Precomputed output: -9990009990009990
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Ratio: 15.866966773582377
+2025-03-19 19:26:37,106 - swap_test_generator - INFO - Generated 4 test cases successfully
+2025-03-19 19:26:37,106 - swap_test_generator - INFO - Printing 4 test cases
+2025-03-19 19:26:37,106 - swap_test_generator - INFO - Printing test case: minimal_swap_0_to_1
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Direction: token0_to_token1
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Current tick: 76012
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Current price: 2000.0
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Expected amounts: 1000000000000000 token0, -1996801996801996 token1
+2025-03-19 19:26:37,106 - swap_test_generator - DEBUG - Finished printing test case: minimal_swap_0_to_1
+2025-03-19 19:26:37,107 - swap_test_generator - INFO - Printing test case: minimal_swap_1_to_0
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Direction: token1_to_token0
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Current tick: 76012
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Current price: 2000.0
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Expected amounts: -999500 token0, 2000000 token1
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Finished printing test case: minimal_swap_1_to_0
+2025-03-19 19:26:37,107 - swap_test_generator - INFO - Printing test case: exact_tick_boundary_0_to_1
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Direction: token0_to_token1
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Current tick: 76012
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Current price: 2000.0
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Expected amounts: 2040384454843 token0, -4080396578530099 token1
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Finished printing test case: exact_tick_boundary_0_to_1
+2025-03-19 19:26:37,107 - swap_test_generator - INFO - Printing test case: round_numbers_swap
+2025-03-19 19:26:37,107 - swap_test_generator - DEBUG - Direction: token0_to_token1
+2025-03-19 19:26:37,108 - swap_test_generator - DEBUG - Current tick: 69081
+2025-03-19 19:26:37,108 - swap_test_generator - DEBUG - Current price: 1000.0
+2025-03-19 19:26:37,108 - swap_test_generator - DEBUG - Expected amounts: 10000000000000000 token0, -9990009990009990 token1
+2025-03-19 19:26:37,108 - swap_test_generator - DEBUG - Finished printing test case: round_numbers_swap
+2025-03-19 19:26:37,108 - swap_test_generator - INFO - Swap test generator script completed successfully

@@ -1,4 +1,4 @@
-from uniswap_v3_math import price_to_tick, price_to_sqrtp, calc_amount0, calc_amount1, q96
+from py_utils.uniswap_v3_math import price_to_tick, price_to_sqrtp, calc_amount0, calc_amount1, q96
 import math
 
 def generate_swap_test_values(
