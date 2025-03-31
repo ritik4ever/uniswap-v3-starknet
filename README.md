@@ -59,3 +59,39 @@ Join our our [Telegram group](https://t.me/+bPtBG-CEsLlhYzM1)! Don't hesitate to
 
 
 *This educational implementation is not affiliated with or endorsed by Uniswap Labs.*
+
+
+## Continuous Integration
+
+This project uses GitHub Actions for continuous integration to ensure code quality and consistency. The CI pipeline performs the following checks on every pull request and push to the main branch:
+
+### Installed Tools
+
+- **Scarb 2.11.1**: The Cairo package manager used for building and managing dependencies
+- **snforge 0.38.3**: Starknet Foundry's testing framework for Cairo
+
+### Automated Checks
+
+- **Code Formatting**: Ensures all code follows the project's formatting standards
+- **Tests**: Runs the full test suite to verify functionality
+
+### Local Development
+
+To ensure your code will pass CI checks, set up your local environment with:
+
+```bash
+# Install Scarb 2.11.1
+asdf install scarb 2.11.1
+asdf local scarb 2.11.1
+
+# Install snforge 0.38.3
+# Option 1: Clone and build from source
+git clone --depth 1 --branch v0.38.3 https://github.com/foundry-rs/starknet-foundry.git
+cd starknet-foundry
+cargo build --release --bin snforge
+cp target/release/snforge ~/.local/bin/
+
+# Run checks locally
+scarb fmt --check  # Check formatting
+scarb snforge test # Run tests
+```
