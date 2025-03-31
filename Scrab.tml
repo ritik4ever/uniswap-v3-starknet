@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Install ASDF
+        uses: asdf-vm/actions/setup@v2
+
+      - name: Install Scarb
+        run: |
+          git clone https://github.com/software-mansion/asdf-scarb.git ~/.asdf/plugins/scarb
+          asdf install scarb 2.11.1
+          asdf local scarb 2.11.1
+          asdf global scarb 2.11.1
+
+      - name: Install snforge via cargo
+        run: |
+          # Clone the starknet-foundry repository at the specific tag
+          git clone --depth 1 --branch v0.38.3 https://github.com/foundry-rs/starknet-foundry.git
+          cd starknet-foundry
+
+          # Build and install snforge
+          cargo build --release --bin snforge
+
+          # Create directory and copy binary
+          mkdir -p ~/.local/bin
+          cp target/release/snforge ~/.local/bin/
+          chmod +x ~/.local/bin/snforge
+
+          # Add to PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify installations
+        run: |
+          scarb --version
+          which snforge || echo "snforge not found in PATH"
+          ~/.local/bin/snforge --version || echo "snforge binary not executable"
+
+      - name: Check formatting
+        run: scarb fmt --check
+
+      - name: Run tests
+        run: scarb snforge test
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/config/Scarb.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
